@@ -43,7 +43,7 @@ class Module(MgrModule):
         cherrypy.tree.mount(Module.HelloWorld(self), "/")
         cherrypy.engine.start()
         self.log.info("Waiting for engine...")
-        cherrypy.engine.block();
+        cherrypy.engine.block()
         self.log.info("Engine done.")
 
     def shutdown(self):
