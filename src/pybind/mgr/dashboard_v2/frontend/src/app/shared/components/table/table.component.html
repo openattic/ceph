@@ -1,0 +1,48 @@
+<div class="dataTables_wrapper">
+  <div class="dataTables_header clearfix"
+       *ngIf="header">
+    <!-- actions -->
+    <div class="oadatatableactions">
+        <ng-content select="table-actions"></ng-content>
+    </div>
+    <!-- end actions -->
+
+    <!-- search -->
+    <div class="input-group">
+      <span class="input-group-addon">
+        <i class="glyphicon glyphicon-search"></i>
+      </span>
+      <input class="form-control"
+             type="text"
+             (keyup)='updateFilter($event)'>
+    </div>
+    <!-- end search -->
+
+    <!-- pagination limit -->
+    <div class="dataTables_length widget-toolbar">
+      <button type="button"
+              class="btn btn-sm btn-default dropdown-toggle tc_entries_dropdown"
+              data-toggle="dropdown"
+              aria-expanded="false">
+        {{ filterConfig.entries }}
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu arrow-box-up-right oa-dropdown-menu oa-dropdown-numbers"
+          role="menu">
+        <li *ngFor="let lm of limits"
+            [ngClass]="'tc_entries_' + lm"
+            [ngClass]="{active: limit === lm}">
+          <a (click)="limit = lm"> {{lm}}</a>
+        </li>
+      </ul>
+    </div>
+    <!-- end pagination limit-->
+  </div>
+  <ngx-datatable #table
+                 class="bootstrap fullsceen"
+                 [columnMode]="'force'"
+                 [rows]="rows"
+                 [limit]="filterConfig.entries">
+    <ng-content select="table-columns"></ng-content>
+  </ngx-datatable>
+</div>
