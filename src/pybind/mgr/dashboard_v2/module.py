@@ -28,10 +28,10 @@ class Module(MgrModule):
 
     COMMANDS = [
         {
-            "cmd": "openattic webgui set-user "
+            "cmd": "dashboard set-login-credentials "
                    "name=username,type=CephString "
                    "name=password,type=CephString",
-            "desc": "Set the WebGUI login credentials",
+            "desc": "Set the login credentials",
             "perm": "w"
         }
     ]
@@ -64,7 +64,7 @@ class Module(MgrModule):
         self.log.info("Stopped server")
 
     def handle_command(self, cmd):
-        if cmd['prefix'] == 'openattic webgui set-user':
+        if cmd['prefix'] == 'dashboard set-login-credentials':
             self.set_localized_config('username', cmd['username'])
             hashed_passwd = bcrypt.hashpw(cmd['password'], bcrypt.gensalt())
             self.set_localized_config('password', hashed_passwd)
