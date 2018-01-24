@@ -9,7 +9,8 @@ def _takes_json(func):
         try:
             data = json.loads(body.decode('utf-8'))
         except json.JSONDecodeError as e:
-            raise cherrypy.HTTPError(400, 'Failed to decode JSON: {}'.format(str(e)))
+            raise cherrypy.HTTPError(400, 'Failed to decode JSON: {}'
+                                          .format(str(e)))
         return func(data, *args, **kwargs)
     return inner
 
@@ -21,8 +22,10 @@ def _returns_json(func):
         return json.dumps(ret).encode('utf8')
     return inner
 
+
 def json_error_page(status, message, traceback, version):
-    return json.dumps(dict(status=status, detail=message, traceback=traceback, version=version))
+    return json.dumps(dict(status=status, detail=message, traceback=traceback,
+                           version=version))
 
 
 class RESTResource(object):
@@ -42,7 +45,8 @@ class RESTResource(object):
 
     Test with curl:
 
-    curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}'  http://127.0.0.1:8080/foo
+    curl -H "Content-Type: application/json" -X POST \
+         -d '{"username":"xyz","password":"xyz"}'  http://127.0.0.1:8080/foo
     curl http://127.0.0.1:8080/foo
     curl http://127.0.0.1:8080/foo/0
 
@@ -77,7 +81,8 @@ class RESTResource(object):
         cherrypy.config.update({'error_page.default': json_error_page})
         is_element = len(vpath) > 0
 
-        (method_name, status_code) = self._method_mapping[(cherrypy.request.method, is_element)]
+        (method_name, status_code) = self._method_mapping[
+                (cherrypy.request.method, is_element)]
         method = getattr(self, method_name, None)
         if not method:
             self._not_implemented(is_element)
@@ -91,5 +96,3 @@ class RESTResource(object):
         cherrypy.response.status = status_code
 
         return method(*vpath, **params)
-
-
