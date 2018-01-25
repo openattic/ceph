@@ -14,7 +14,7 @@ from mgr_module import MgrModule
 
 
 # cherrypy likes to sys.exit on error.  don't let it take us down too!
-def os_exit_noop():
+def os_exit_noop(*args):
     pass
 
 
