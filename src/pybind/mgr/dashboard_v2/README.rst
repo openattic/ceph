@@ -142,7 +142,7 @@ Example::
   from ..tools import ApiController, AuthRequired, RESTController
 
   @ApiController('ping2')
-  @AuthRequired
+  @AuthRequired()
   class Ping2(RESTController):
     def list(self):
       return {"msg": "Hello"}
