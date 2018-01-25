@@ -31,7 +31,7 @@ class AuthTest(helper.CPWebCase):
         cherrypy.tree.mount(AuthTest.Auth(), "/api/auth")
         cherrypy.tree.mount(Ping(), "/api/test",
                             config={'/': {'tools.autenticate.on': True}})
-        module.set_localized_config('session-expire','0.5')
+        module.set_localized_config('session-expire','2')
         module.set_localized_config('username','admin')
         pass_hash = AuthTest.Auth.password_hash('admin')
         module.set_localized_config('password', pass_hash)
@@ -91,7 +91,7 @@ class AuthTest(helper.CPWebCase):
             self.assertStatus('200 OK')
             self.assertEquals(sess_mock.get(AuthTest.Auth.SESSION_KEY),
                               'admin')
-            time.sleep(1)
+            time.sleep(3)
             self._post("/api/test/ping")
             self.assertStatus('401 Unauthorized')
             self.assertEquals(sess_mock.get(AuthTest.Auth.SESSION_KEY), None)
