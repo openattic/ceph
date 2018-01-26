@@ -25,3 +25,9 @@ class EchoArgs(RESTController):
 class Echo(RESTController):
     def create(self, data):
         return {'echo': data['msg']}
+
+
+@ApiController('echo3')
+class Echo3(RESTController):
+    def create(self, data):
+        return {'echo': data['msg']}
