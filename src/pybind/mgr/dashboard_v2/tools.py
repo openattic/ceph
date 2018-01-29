@@ -58,7 +58,8 @@ def load_controllers(mgrmodule):
         for _, cls in mod.__dict__.items():
             if isinstance(cls, type) and hasattr(cls, '_cp_controller_'):
                 # found controller
-                cls._mgr_module_ = mgrmodule
+                cls.mgr = mgrmodule
+                cls.logger = mgrmodule.log
                 controllers.append(cls)
 
     return controllers
@@ -201,9 +202,11 @@ class ExternalCommandError(Exception):
         elif cmd is None:
             s = 'error={} code={}'.format(err, code_string)
         else:
-            cmd = cmd['prefix'] if isinstance(cmd, dict) and 'prefix' in cmd else cmd
+            cmd = cmd['prefix'] if isinstance(cmd, dict) and 'prefix' in cmd \
+                                else cmd
             s = 'Executing "{} {}" failed: "{}" code={}'.format(cmd, ' '.join(
-                ['{}={}'.format(k, v) for k, v in argdict.items()]), err, code_string)
+                ['{}={}'.format(k, v) for k, v in argdict.items()]), err,
+                code_string)
         super(ExternalCommandError, self).__init__(s)
 
 

@@ -16,10 +16,6 @@ cluster_serializer = partial(nodb_serializer, CephCluster)
 @ApiController('cluster')
 class Cluster(RESTController):
 
-    def __init__(self):
-        self._mod = Cluster._mgr_module_
-        self._log = self._mod.log
-
     def list(self):
         with nodb_context(self):
             map(cluster_serializer, CephCluster.objects.all())

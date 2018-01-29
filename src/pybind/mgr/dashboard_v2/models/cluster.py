@@ -44,7 +44,7 @@ class CephCluster(NodbModel, SendCommandApiMixin):
     @staticmethod
     def get_all_objects(api_controller, query):
         """:type api_controller: RESTController"""
-        fsid = api_controller._mgr_module_.get("mon_status")['json'].data['monmap']['fsid']
+        fsid = api_controller.mgr.get("mon_status")['json'].data['monmap']['fsid']
         return [CephCluster(fsid)]
 
     def save(self, update_fields=None, force_update=False, *args, **kwargs):

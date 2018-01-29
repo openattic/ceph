@@ -13,7 +13,7 @@ class SendCommandApiMixin(object):
 
     @cached_property
     def send_command_api(self):
-        mgr = NodbManager.nodb_context._mgr_module_  # type: MgrModule
+        mgr = NodbManager.nodb_context.mgr  # type: MgrModule
 
         return SendCommandApi(mgr)
 
