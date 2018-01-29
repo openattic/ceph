@@ -57,7 +57,7 @@ class Module(MgrModule):
                 'engine.autoreload.on': False
             })
         cherrypy.tools.authenticate = cherrypy.Tool('before_handler',
-                                                   Auth.check_auth)
+                                                    Auth.check_auth)
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         fe_dir = os.path.join(current_dir, 'frontend/dist')
