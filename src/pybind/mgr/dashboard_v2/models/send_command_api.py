@@ -660,10 +660,10 @@ class SendCommandApi(object):
         result = CommandResult('dashboard_v2')
 
         # logger.debug('mod command {}, {}, {}'.format(cmd, argdict, err))
-        self.mgr.send_command(result, 'mon', '', json.dumps(dict(cmd,
-                              format=output_format,
-                              **argdict if argdict is not None else {})), tag='dashboard_v2',
-                              taget=target)
+        self.mgr_module.send_command(result, 'mon', '', json.dumps(dict(cmd,
+                                     format=output_format,
+                                     **argdict if argdict is not None else {})),
+                                     tag='dashboard_v2', taget=target)
 
         ret, out, err = result.wait()
 

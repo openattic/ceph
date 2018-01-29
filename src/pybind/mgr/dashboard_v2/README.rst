@@ -168,8 +168,8 @@ Example::
   @ApiController('servers')
   class Servers(RESTController):
     def list(self):
-      self.logger.debug('Listing available servers')
-      return {'servers': self.mgr.list_servers()}
+      self.log.debug('Listing available servers')
+      return {'servers': self.mgr_module.list_servers()}
 
 We also inject a class property ``logger`` that is provided by the module class
 to easily add log messages.

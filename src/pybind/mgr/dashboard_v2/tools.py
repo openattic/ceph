@@ -42,7 +42,7 @@ def AuthRequired(enabled=True):
     return decorate
 
 
-def load_controllers(mgrmodule):
+def load_controllers(mgr_module):
     # setting sys.path properly when not running under the mgr
     dashboard_dir = os.path.dirname(os.path.realpath(__file__))
     mgr_dir = os.path.dirname(dashboard_dir)
@@ -58,8 +58,8 @@ def load_controllers(mgrmodule):
         for _, cls in mod.__dict__.items():
             if isinstance(cls, type) and hasattr(cls, '_cp_controller_'):
                 # found controller
-                cls.mgr = mgrmodule
-                cls.logger = mgrmodule.log
+                cls.mgr_module = mgr_module
+                cls.log = mgr_module.log
                 controllers.append(cls)
 
     return controllers

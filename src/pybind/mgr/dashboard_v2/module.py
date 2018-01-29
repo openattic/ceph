@@ -74,7 +74,6 @@ class Module(MgrModule):
 
     def serve(self):
         self.configure_cherrypy()
-
         cherrypy.engine.start()
         self.log.info('Waiting for engine...')
         cherrypy.engine.block()
@@ -94,14 +93,14 @@ class Module(MgrModule):
                 .format(cmd['prefix']))
 
     class ApiRoot(object):
-        def __init__(self, mgrmod):
-            ctrls = load_controllers(mgrmod)
-            mgrmod.log.debug('Loaded controllers: {}'.format(ctrls))
+        def __init__(self, mgr_module):
+            ctrls = load_controllers(mgr_module)
+            mgr_module.log.debug('Loaded controllers: {}'.format(ctrls))
             for ctrl in ctrls:
-                mgrmod.log.info('Adding controller: {} -> /api/{}'
-                                .format(ctrl.__name__, ctrl._cp_path_))
-                ins = ctrl()
-                setattr(Module.ApiRoot, ctrl._cp_path_, ins)
+                mgr_module.log.info('Adding controller: {} -> /api/{}'
+                                    .format(ctrl.__name__, ctrl._cp_path_))
+                ctrl_inst = ctrl()
+                setattr(Module.ApiRoot, ctrl._cp_path_, ctrl_inst)
 
     class StaticRoot(object):
         pass
