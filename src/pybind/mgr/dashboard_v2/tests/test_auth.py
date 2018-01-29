@@ -2,7 +2,9 @@
 
 from __future__ import absolute_import
 
+import os
 import time
+from unittest import skipIf
 
 import cherrypy
 from cherrypy.lib.sessions import RamSession
@@ -68,6 +70,7 @@ class AuthTest(ControllerTestCase):
             self.assertBody('')
             self.assertEqual(sess_mock.get(Auth.SESSION_KEY), None)
 
+    @skipIf(os.environ.get('SKIP_SLOW_TESTS', False), 'Skipping slow test')
     def test_session_expire(self):
         sess_mock = RamSession()
         with patch('cherrypy.session', sess_mock, create=True):
