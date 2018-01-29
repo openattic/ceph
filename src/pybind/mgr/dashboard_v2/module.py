@@ -12,6 +12,7 @@ from mgr_module import MgrModule
 
 from .controllers.auth import Auth
 from .tools import load_controllers
+from .settings import Settings, options_command_list, handle_option_command
 
 
 # cherrypy likes to sys.exit on error.  don't let it take us down too!
@@ -38,8 +39,11 @@ class Module(MgrModule):
             'perm': 'w'
         }
     ]
+    COMMANDS.extend(options_command_list())
 
-    def configure_cherrypy(self, in_unittest=False):
+    def configure_module(self, in_unittest=False):
+        Settings.mgr = self  # injects module instance into Settings class
+
         server_addr = self.get_localized_config('server_addr', '::')
         server_port = self.get_localized_config('server_port', '8080')
         if server_addr is None:
@@ -73,7 +77,7 @@ class Module(MgrModule):
         cherrypy.tree.mount(Module.StaticRoot(), '/', config=config)
 
     def serve(self):
-        self.configure_cherrypy()
+        self.configure_module()
 
         cherrypy.engine.start()
         self.log.info('Waiting for engine...')
@@ -86,6 +90,9 @@ class Module(MgrModule):
         self.log.info('Stopped server')
 
     def handle_command(self, cmd):
+        res = handle_option_command(cmd)
+        if res[0] == 0:
+            return res
         if cmd['prefix'] == 'dashboard set-login-credentials':
             Auth.set_login_credentials(cmd['username'], cmd['password'])
             return 0, 'Username and password updated', ''

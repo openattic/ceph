@@ -41,7 +41,7 @@ class ControllerTestCase(helper.CPWebCase, RequestHelper):
     def setup_server(cls):
         module = Module('dashboard', None, None)
         cls._mgr_module = module
-        module.configure_cherrypy(True)
+        module.configure_module(True)
         cls.setup_test()
 
     @classmethod
