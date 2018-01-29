@@ -8,6 +8,7 @@ import json
 import os
 import pkgutil
 import sys
+from errno import errorcode
 
 import cherrypy
 
@@ -183,3 +184,35 @@ class RESTController(object):
             ret = func(*args, **kwargs)
             return json.dumps(ret).encode('utf8')
         return inner
+
+
+class ValidationError(cherrypy.HTTPError):
+    def __init__(self, message):
+        super(ValidationError, self).__init__(400, message)
+
+
+class ExternalCommandError(Exception):
+    def __init__(self, err, cmd=None, argdict=None, code=None):
+        self.code = abs(code) if code is not None else None
+        code_string = errorcode.get(self.code, str(self.code))
+        argdict = argdict if isinstance(argdict, dict) else {}
+        if cmd is None and self.code is None:
+            s = err
+        elif cmd is None:
+            s = 'error={} code={}'.format(err, code_string)
+        else:
+            cmd = cmd['prefix'] if isinstance(cmd, dict) and 'prefix' in cmd else cmd
+            s = 'Executing "{} {}" failed: "{}" code={}'.format(cmd, ' '.join(
+                ['{}={}'.format(k, v) for k, v in argdict.items()]), err, code_string)
+        super(ExternalCommandError, self).__init__(s)
+
+
+class cached_property(object):
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
