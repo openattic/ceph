@@ -16,7 +16,7 @@ class QuerySetTestCase(TestCase):
             fsid = CharField()
 
             @staticmethod
-            def get_all_objects(context, query):
+            def get_all_objects(api_controller, query):
                 return [
                     CephClusterMock(fsid='e79f3338-f9e4-4656-8af3-7af7357fcd09', name='ceph'),
                     CephClusterMock(fsid='e90a0c5a-5caa-405a-bc09-a7cfd1874243', name='vinara'),
@@ -33,7 +33,7 @@ class QuerySetTestCase(TestCase):
             y = IntegerField()
 
             @staticmethod
-            def get_all_objects(context, query):
+            def get_all_objects(api_controller, query):
                 return [cls.ordering_a, cls.ordering_b, cls.ordering_c]
 
         cls.ordering_a = OrderTestModel(x=1, y=1)
@@ -45,7 +45,7 @@ class QuerySetTestCase(TestCase):
         class EmptyModel(NodbModel):
 
             @staticmethod
-            def get_all_objects(context, query):
+            def get_all_objects(api_controller, query):
                 return []
 
         cls.empty_qs = NodbQuerySet(EmptyModel)
@@ -174,7 +174,7 @@ class DictFieldSerializerTest(TestCase):
         class DictFieldModel(NodbModel):
 
             @staticmethod
-            def get_all_objects(context, query):
+            def get_all_objects(api_controller, query):
                 self.fail("should not be called")
 
             my_dict = JsonField(base_type=list, primary_key=True)
@@ -197,7 +197,7 @@ class DictFieldSerializerTest(TestCase):
             blank = JsonField(base_type=list, blank=True)
 
             @staticmethod
-            def get_all_objects(context, query):
+            def get_all_objects(api_controller, query):
                 return []
 
         m = DictFieldModel2(non_nullable=[1], nullable=None, blank=[])
@@ -247,7 +247,7 @@ class LazyPropertyTest(TestCase):
             self.e = self.a
 
         @staticmethod
-        def get_all_objects(context, query):
+        def get_all_objects(api_controller, query):
             return [
                 LazyPropertyTest.TestModel(a=1),
                 LazyPropertyTest.TestModel(a=2)
@@ -304,7 +304,7 @@ class NodbModelTest(TestCase):
         with_default = IntegerField(default=42)
 
         @staticmethod
-        def get_all_objects(context, query):
+        def get_all_objects(api_controller, query):
             return [
                 NodbModelTest.SimpleModel(a=1, b=2),
                 NodbModelTest.SimpleModel(a=10, b=20)
@@ -340,7 +340,7 @@ class JsonFieldFilterTest(TestCase):
         my_list = JsonField(base_type=list, primary_key=True)
 
         @staticmethod
-        def get_all_objects(context, query):
+        def get_all_objects(api_controller, query):
             return [JsonFieldFilterTest.JsonFieldListFilterModel(my_list=['a', 'b']),
                     JsonFieldFilterTest.JsonFieldListFilterModel(my_list=['b', 'c']),
                     JsonFieldFilterTest.JsonFieldListFilterModel(my_list=['z'])]
@@ -349,7 +349,7 @@ class JsonFieldFilterTest(TestCase):
         my_object_list = JsonField(base_type=list, primary_key=True)
 
         @staticmethod
-        def get_all_objects(context, query):
+        def get_all_objects(api_controller, query):
             return [JsonFieldFilterTest.JsonFieldObjectFilterModel(my_object_list={'attr1': a1,
                                                                                    'attr2': a2})
                     for (a1, a2) in

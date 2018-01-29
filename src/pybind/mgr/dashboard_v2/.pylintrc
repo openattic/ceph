@@ -135,7 +135,9 @@ disable=print-statement,
         bad-continuation,
         wildcard-import,
         unused-wildcard-import,
-        trailing-comma-tuple
+        trailing-comma-tuple,
+        unused-import,
+        fixme
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

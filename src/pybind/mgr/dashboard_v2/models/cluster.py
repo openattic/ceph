@@ -1,7 +1,7 @@
 from ..models.send_command_api import SendCommandApiMixin
 from ..tools import ExternalCommandError
 from .nodb import *
-from ..tools import RESTController
+from ..tools import RESTController  # pylint: disable=W0611
 
 
 class CephCluster(NodbModel, SendCommandApiMixin):
@@ -35,7 +35,8 @@ class CephCluster(NodbModel, SendCommandApiMixin):
         if 'timechecks' not in val:
             try:
                 val['timechecks'] = self.send_command_api.time_sync_status()
-            except Exception:
+            except Exception:  # pylint: disable=W0703
+                # TODO: find out, which Exception is thrown.
                 # logger.exception('time_sync_status failed.')
                 val['timechecks'] = {}
         val['health'] = self.send_command_api.health('detail')
@@ -44,10 +45,13 @@ class CephCluster(NodbModel, SendCommandApiMixin):
     @staticmethod
     def get_all_objects(api_controller, query):
         """:type api_controller: RESTController"""
+        # TODO: make sure, this works:
         fsid = api_controller.mgr.get("mon_status")['json'].data['monmap']['fsid']
         return [CephCluster(fsid)]
 
-    def save(self, update_fields=None, force_update=False, *args, **kwargs):
+    # Added all arguments to make pylint happy:
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
         """
         This method implements three purposes.
 
@@ -70,16 +74,18 @@ class CephCluster(NodbModel, SendCommandApiMixin):
                 for flag in set(value) - set(original.osd_flags):
                     api.osd_set(flag)
             else:
-                logger.warning('Tried to set "{}" to "{}" on rbd "{}", which is not '
-                               'supported'.format(key, value, self.config_file_path))
+                pass
+                #  logger.warning('Tried to set "{}" to "{}" on rbd "{}", which is not '
+                #               'supported'.format(key, value, self.config_file_path))
 
-        super(CephCluster, self).save(*args, **kwargs)
+        super(CephCluster, self).save(force_insert=force_insert, force_update=force_update,
+                                      using=using, update_fields=update_fields)
 
     def get_crushmap(self):
         return CrushmapVersion.objects.get()
 
     @bulk_attribute_setter(['health'])
-    def set_cluster_health(self, objects, field_names):
+    def set_cluster_health(self, objects, field_names):  # pylint: disable=W0613
         try:
             health = self.send_command_api.health()
             # Ceph Luminous > 12.1 renamed `overall_status` to `status`
@@ -90,7 +96,7 @@ class CephCluster(NodbModel, SendCommandApiMixin):
 
     # Also catch ObjectNotFound:
     @bulk_attribute_setter(['osd_flags'], catch_exceptions=(TypeError, ExternalCommandError))
-    def set_osd_flags(self, objects, field_names):
+    def set_osd_flags(self, objects, field_names):  # pylint: disable=W0613
         flags = self.send_command_api.osd_dump()['flags'].split(',')
         if 'pauserd' in flags and 'pausewr' in flags:
             # 'pause' is special:
@@ -110,14 +116,14 @@ class CephCluster(NodbModel, SendCommandApiMixin):
 
 
 class CrushmapVersion(NodbModel):
-
+    # pylint: disable=E1136
     crushmap = JsonField(base_type=dict)
 
     @staticmethod
-    def get_all_objects(context, query):
+    def get_all_objects(api_controller, query):
         """:type context: ceph.restapi.FsidContext"""
-        assert context is not None
-        fsid = context.cluster.fsid
+
+        # TODO: make sure this works:
         crushmap = SendCommandApiMixin().send_command_api.osd_crush_dump()
 
         return [CrushmapVersion(id=1, crushmap=crushmap)]

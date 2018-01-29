@@ -1,21 +1,21 @@
 from contextlib import contextmanager
-from functools import partial
-
+from functools import partial, reduce
 import json
-from functools import reduce
+import logging
+import itertools
+import operator
+import copy
 
+from mock import mock
 from six import add_metaclass
 
 from ..tools import ValidationError, cached_property
 
-import logging
-
-import itertools
-import operator
-import copy
-from mock import mock
 
 logger = logging.getLogger(__name__)
+
+
+# pylint: disable=W0212, W0613
 
 
 class Q(object):
@@ -71,6 +71,7 @@ NOT_PROVIDED = object()
 
 
 class Field(object):
+    # pylint: disable=R0902, R0913
     def __init__(self, primary_key=False, editable=True, null=False, blank=False,
                  default=NOT_PROVIDED, help_text='', validators=None, verbose_name=None,
                  choices=None, name=None):
@@ -257,6 +258,7 @@ class NodbQuerySet(object):
                 raise ValueError('Unsupported Modifier {}.'.format(modifier))
 
         def filter_impl(keys, value, obj):
+            # pylint: disable=R1701
             assert keys
 
             if isinstance(obj, dict):
@@ -287,7 +289,10 @@ class NodbQuerySet(object):
             :rtype: bool
             """
             def negate(res):
+                # pylint: disable=R1705
                 return not res if q.negated else res
+
+            # pylint: disable=R1705
 
             if q is None:
                 return True
@@ -302,6 +307,7 @@ class NodbQuerySet(object):
         filtered = [obj for obj in self._data()
                     if filter_one_q(self._query.q, obj)]
 
+        # pylint: disable=W0640
         for order_key in self.query.ordering[::-1]:
             if order_key.startswith("-"):
                 order_key = order_key[1:]
@@ -345,6 +351,7 @@ class NodbQuerySet(object):
     def count(self):
         return len(self._filtered_data)
 
+    # pylint: disable=R1710
     def get(self, **kwargs):
         """Return a single object filtered by kwargs."""
         filtered_data = self.filter(**kwargs)
@@ -470,9 +477,9 @@ class LazyProperty(object):
         else:
             try:
                 self.eval_func(instance, query_set, self.field_names)
-            except self.catch_exceptions as e:
-                logger.exception('failed to populate Field "{}" of {} ({})'
-                                 .format(self.field_name, str(instance), instance.__class__))
+            except self.catch_exceptions as _:
+                # logger.exception('failed to populate Field "{}" of {} ({})'
+                #                  .format(self.field_name, str(instance), instance.__class__))
                 fields = instance.__class__.make_model_args({}, fields_force_none=self.field_names)
                 for field_name, value in list(fields.items()):
                     setattr(instance, field_name, value)
@@ -552,7 +559,7 @@ def bulk_attribute_setter(field_names, catch_exceptions=None):
     :type catch_exceptions: exceptions.Exception | tuple[exceptions.Exception]
     """
 
-    if not len(field_names):
+    if not field_names:
         raise ValueError('`field_names` must not be empty.')
 
     class LazyPropertyContributor(object):
@@ -561,9 +568,9 @@ def bulk_attribute_setter(field_names, catch_exceptions=None):
             self.func = func
 
         def contribute_to_class(self, cls, name, virtual_only=False):
-            for name in self.field_names:
-                setattr(cls, name, LazyProperty(name, self.func, catch_exceptions,
-                                                self.field_names))
+            for name2 in self.field_names:
+                setattr(cls, name2, LazyProperty(name2, self.func, catch_exceptions,
+                                                 self.field_names))
 
     def decorator(func):
         return LazyPropertyContributor(field_names, func)
@@ -611,12 +618,12 @@ class NodbOptions(object):
         # Next, apply any overridden values from 'class Meta'.
         if self.meta:
             meta_attrs = self.meta.__dict__.copy()
-            for name in self.meta.__dict__:
+            for name2 in self.meta.__dict__:
                 # Ignore any private attributes that Django doesn't care about.
                 # NOTE: We can't modify a dictionary's contents while looping
                 # over it, so we loop over the *original* dictionary instead.
-                if name.startswith('_'):
-                    del meta_attrs[name]
+                if name2.startswith('_'):
+                    del meta_attrs[name2]
             # from django.db.models.options import DEFAULT_NAMES
             # for attr_name in DEFAULT_NAMES:
             #    if attr_name in meta_attrs:
@@ -663,12 +670,12 @@ class NodbOptions(object):
 
 class NodbModelMeta(type):
     # Copy from django.db.models.base.ModelBase#__new__
-    def __new__(cls, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         # Create the class.
         dunders = {k: v for k, v in attrs.items() if k in ['__module__', '__doc__', '__init__']}
         for k in dunders:
             del attrs[k]
-        new_class = super(NodbModelMeta, cls).__new__(cls, name, bases, dunders)
+        new_class = super(NodbModelMeta, mcs).__new__(mcs, name, bases, dunders)
         attr_meta = attrs.pop('Meta', None)
         if not attr_meta:
             meta = getattr(new_class, 'Meta', None)
@@ -700,14 +707,13 @@ class NodbModelMeta(type):
             setattr(cls, name, value)
 
 
-# FIXME: metaclass
 @add_metaclass(NodbModelMeta)
 class NodbModel(object):
 
     objects = NodbManager()
 
     @staticmethod
-    def get_all_objects(context, query):
+    def get_all_objects(api_controller, query):
         msg = 'Every NodbModel must implement its own get_all_objects() method.'
         raise NotImplementedError(msg)
 
@@ -730,7 +736,7 @@ class NodbModel(object):
         if update_fields is None:
             update_fields = field_names
         else:
-            assert not (set(update_fields) - set(field_names))
+            assert not set(update_fields) - set(field_names)
 
         fields = [f for f in self.__class__._meta.fields if f.attname in update_fields]
         original = self.__class__.objects.get(**kwargs)
@@ -801,7 +807,7 @@ class NodbModel(object):
 
             try:
                 python_val = field.to_python(val)
-            except ValidationError as e:
+            except ValidationError as _:
                 return []
 
             return [(field.attname, python_val)]

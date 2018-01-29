@@ -3,16 +3,17 @@ from collections import deque
 from contextlib import contextmanager
 from errno import EPERM
 from functools import reduce
+from mgr_module import MgrModule, CommandResult
 
 from ..tools import ExternalCommandError, cached_property
 from .nodb import NodbManager
-from mgr_module import MgrModule, CommandResult
 
 
 class SendCommandApiMixin(object):
 
     @cached_property
     def send_command_api(self):
+        # pylint: disable=W0212
         mgr = NodbManager.nodb_context.mgr  # type: MgrModule
 
         return SendCommandApi(mgr)
@@ -63,6 +64,7 @@ def undo_transaction(undo_context, exception_type=ExternalCommandError, re_raise
     if getattr(undo_context, '_undo_stack', None) is not None:
         raise ValueError('Nested transactions are not supported.')
     try:
+        # pylint: disable=W0212
         undo_context._undo_stack = deque()
         yield undo_context
         try:
@@ -70,7 +72,7 @@ def undo_transaction(undo_context, exception_type=ExternalCommandError, re_raise
         except AttributeError:
             pass
             # logger.exception('Ignoring Attribute error here.')
-    except exception_type as e:
+    except exception_type as _:
         # logger.exception('Will now undo steps performed.')
         stack = getattr(undo_context, '_undo_stack')
         delattr(undo_context, '_undo_stack')
@@ -80,7 +82,7 @@ def undo_transaction(undo_context, exception_type=ExternalCommandError, re_raise
             raise
 
 
-class SendCommandApi(object):
+class SendCommandApi(object):  # pylint: disable=R0904
     """
     API source: https://github.com/ceph/ceph/blob/master/src/mon/MonCommands.h
     """
@@ -113,7 +115,7 @@ class SendCommandApi(object):
         return self._call_mon_command('mgr metadata',
                                       self._args_to_argdict(who=who))
 
-    def mon_metadata(self, id=None):
+    def mon_metadata(self, id=None):  # pylint: disable=W0622
         """
         COMMAND("mon metadata name=id,type=CephString,req=false",
         "fetch metadata for mon <id>",
@@ -177,6 +179,7 @@ class SendCommandApi(object):
         """
         return self._call_mon_command('osd erasure-code-profile ls')
 
+    # pylint: disable=R0913
     @undoable
     def osd_pool_create(self, pool, pg_num, pgp_num, pool_type, erasure_code_profile=None,
                         ruleset=None, expected_num_objects=None):
@@ -219,6 +222,7 @@ class SendCommandApi(object):
             output_format='string')
         self.osd_pool_delete(pool, pool, "--yes-i-really-really-mean-it")
 
+    # pylint: disable=R0913
     @undoable
     def osd_pool_set(self, pool, var, val, force=None, undo_previous_value=None):
         # TODO: crush_ruleset was renamed to crush_rule in Luminous. Thus add:
@@ -433,8 +437,7 @@ class SendCommandApi(object):
                                      output_format='string')
         self.osd_tier_remove_overlay(pool)
 
-    @undoable
-    def osd_tier_remove_overlay(self, pool, undo_previous_overlay):
+    def osd_tier_remove_overlay(self, pool):
         """
         COMMAND("osd tier remove-overlay " \
         "name=pool,type=CephPoolname ", \
@@ -444,9 +447,8 @@ class SendCommandApi(object):
 
         Modifies the `read_tier` field of the storagepool
         """
-        yield self._call_mon_command('osd tier remove-overlay', self._args_to_argdict(pool=pool),
-                                     output_format='string')
-        self.osd_tier_set_overlay(pool, undo_previous_overlay)
+        self._call_mon_command('osd tier remove-overlay', self._args_to_argdict(pool=pool),
+                               output_format='string')
 
     @undoable
     def osd_out(self, name):
@@ -551,7 +553,7 @@ class SendCommandApi(object):
         """
         return self._call_mon_command('osd tree')
 
-    def osd_metadata(self, id=None):
+    def osd_metadata(self, id=None):  # pylint: disable=W0622
         """
         COMMAND("osd metadata " \
         "name=id,type=CephInt,range=0,req=false", \
@@ -628,6 +630,8 @@ class SendCommandApi(object):
     def df(self):
         return self._call_mon_command('df', self._args_to_argdict(detail='detail'))
 
+    # FIXME: make use of timeout.
+    # pylint: disable=W0613
     def _call_mon_command(self, cmd, argdict=None, output_format='json', target=None, timeout=30):
         """Calls a command and returns the result as dict.
 
@@ -653,7 +657,7 @@ class SendCommandApi(object):
         :raises TimedOut: See rados.make_ex
         """
 
-        if type(cmd) is str:
+        if isinstance(cmd, str):
             cmd = {'prefix': cmd}
 
         assert isinstance(cmd, dict)
