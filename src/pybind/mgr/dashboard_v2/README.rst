@@ -201,3 +201,46 @@ case needs to add to the test.
 In the example above we use the ``setup_test()`` method to disable the
 authentication handler for the ``Ping2`` controller.
 
+
+How to add a new configuration setting?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to store some configuration setting for a new feature, we already
+provide an easy mechanism for you to specify/use the new config setting.
+
+For instance, if you want to add a new configuration setting to hold the
+email address of the dashboard admin, just add a setting name as a class
+attribute to the ``Options`` class in the ``settings.py`` file::
+
+  # ...
+  class Options(object):
+    # ...
+
+    ADMIN_EMAIL_ADDRESS = ('admin@admin.com', str)
+
+The value of the class attribute is pair composed by the default value for that
+setting, and the python type of the value.
+
+By declaring the ``ADMIN_EMAIL_ADDRESS`` class attribute, when you restart the
+dashboard plugin, you will atomatically gain two additional CLI commands to
+get and set that setting::
+
+  $ ceph dashboard get-admin-email-address
+  $ ceph dashboard set-admin-email-address <value>
+
+To access, or modify the config setting value from your python code, either
+inside a controller or anywhere else, you just need to import the ``Settings``
+class and access it like this::
+
+  from settings import Settings
+
+  # ...
+  tmp_var = Settings.ADMIN_EMAIL_ADDRESS
+
+  # ....
+  Settings.ADMIN_EMAIL_ADDRESS = 'myemail@admin.com'
+
+The settings management implementation will make sure that if you change a
+setting value from the python code you will see that change when accessing
+that setting from the CLI and vice-versa.
+
