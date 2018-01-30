@@ -2,9 +2,10 @@ import json
 from collections import deque
 from contextlib import contextmanager
 from errno import EPERM
-from functools import reduce
-from mgr_module import MgrModule, CommandResult
 
+from six.moves import reduce
+
+from mgr_module import MgrModule, CommandResult
 from ..tools import ExternalCommandError, cached_property
 from .nodb import NodbManager
 

@@ -133,8 +133,6 @@ disable=print-statement,
         too-few-public-methods,
         no-member,
         bad-continuation,
-        wildcard-import,
-        unused-wildcard-import,
         trailing-comma-tuple,
         unused-import,
         fixme

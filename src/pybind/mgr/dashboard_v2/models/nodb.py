@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from functools import partial, reduce
+from functools import partial
 import json
 import logging
 import itertools
@@ -7,6 +7,7 @@ import operator
 import copy
 
 from six import add_metaclass
+from six.moves import reduce
 
 from ..tools import ValidationError, cached_property
 
