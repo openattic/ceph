@@ -8,9 +8,9 @@ import json
 import os
 import pkgutil
 import sys
-import six
 from errno import errorcode
 
+import six
 import cherrypy
 
 
@@ -58,7 +58,8 @@ def load_controllers(mgrmodule):
                                       package='dashboard_v2')
         for _, cls in mod.__dict__.items():
             # Controllers MUST be derived from the class BaseController.
-            if isinstance(cls, BaseControllerMeta) and hasattr(cls, '_cp_controller_'):
+            if isinstance(cls, BaseControllerMeta) and \
+                    hasattr(cls, '_cp_controller_'):
                 cls.mgr = mgrmodule
                 controllers.append(cls)
 
