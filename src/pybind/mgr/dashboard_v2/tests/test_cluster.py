@@ -1,7 +1,10 @@
+import json
 from unittest import TestCase
 
-from ..models.cluster import *
-from ..models.nodb import *
+import mock
+
+from ..models.cluster import CephCluster
+from ..models.nodb import nodb_context
 
 
 class CephClusterTestCase(TestCase):
@@ -18,7 +21,9 @@ class CephClusterTestCase(TestCase):
     @mock.patch('dashboard_v2.models.nodb.NodbModel.get_modified_fields')
     @mock.patch('dashboard_v2.models.send_command_api.SendCommandApi._call_mon_command')
     def test_save(self, _call_mon_command_mock, get_modified_fields_mock):
-        with nodb_context(mock.MagicMock()):
+        api_controller = mock.MagicMock()
+        api_controller.mgr.get.return_value = {'json': json.dumps({'monmap': {'fsid': 'xyz'}})}
+        with nodb_context(api_controller):
             cluster = CephCluster.objects.get()
             get_modified_fields_mock.return_value = ({
                                                         'osd_flags': ['a', 'b'],

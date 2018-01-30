@@ -18,7 +18,7 @@ class Cluster(RESTController):
 
     def list(self):
         with nodb_context(self):
-            map(cluster_serializer, CephCluster.objects.all())
+            return map(cluster_serializer, CephCluster.objects.all())
 
     def get(self, _):
         with nodb_context(self):

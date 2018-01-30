@@ -6,7 +6,6 @@ import itertools
 import operator
 import copy
 
-from mock import mock
 from six import add_metaclass
 
 from ..tools import ValidationError, cached_property
@@ -464,6 +463,7 @@ class LazyProperty(object):
         """
         runs eval_func which fills some lazy properties.
         """
+        assert instance is not None
         if hasattr(instance, '_query_set_pointer'):
             query_set = instance._query_set_pointer.target
         else:
@@ -821,7 +821,10 @@ class NodbModel(object):
         return model_args
 
     def __init__(self, *args, **kwargs):
-        self._state = mock.Mock()
+        class _State(object):
+            def __init__(self):
+                self.adding = True
+        self._state = _State()
 
         for k, w in kwargs.items():
             self.__dict__[k] = w  # __dict__ is a dictproxy

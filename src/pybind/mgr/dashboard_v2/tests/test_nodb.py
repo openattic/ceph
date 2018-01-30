@@ -1,7 +1,9 @@
 from unittest import TestCase
 from unittest import skip
 
-from ..models.nodb import *
+from ..tools import ValidationError
+from ..models.nodb import NodbModel, CharField, NodbQuerySet, IntegerField, Q, JsonField, \
+    bulk_attribute_setter
 
 
 class QuerySetTestCase(TestCase):

@@ -661,13 +661,12 @@ class SendCommandApi(object):  # pylint: disable=R0904
             cmd = {'prefix': cmd}
 
         assert isinstance(cmd, dict)
-        result = CommandResult('dashboard_v2')
+        result = CommandResult('')
 
         # logger.debug('mod command {}, {}, {}'.format(cmd, argdict, err))
-        self.mgr.send_command(result, 'mon', '', json.dumps(dict(cmd,
-                              format=output_format,
-                              **argdict if argdict is not None else {})), tag='dashboard_v2',
-                              taget=target)
+        argdict = json.dumps(
+            dict(cmd, format=output_format, **argdict if argdict is not None else {}))
+        self.mgr.send_command(result, 'mon', '', argdict, '')
 
         ret, out, err = result.wait()
 

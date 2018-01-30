@@ -12,10 +12,7 @@ class CephCluster(NodbModel, SendCommandApiMixin):
 
     fsid = CharField(primary_key=True, editable=False)
     health = CharField(editable=False)
-    config_file_path = CharField(editable=False, null=True)
-    keyring_file_path = CharField(null=True)
-    keyring_user = CharField(null=True)
-    osd_flags = JsonField(base_type=list, default=[],
+    osd_flags = JsonField(base_type=list,
                           help_text='supported flags: full|pause|noup|nodown|noout|noin|nobackfill|'
                                     'norebalance|norecover|noscrub|nodeep-scrub|notieragent|'
                                     'sortbitwise|recovery_deletes|require_jewel_osds|'
@@ -46,8 +43,8 @@ class CephCluster(NodbModel, SendCommandApiMixin):
     def get_all_objects(api_controller, query):
         """:type api_controller: RESTController"""
         # TODO: make sure, this works:
-        fsid = api_controller.mgr.get("mon_status")['json'].data['monmap']['fsid']
-        return [CephCluster(fsid)]
+        fsid = json.loads(api_controller.mgr.get("mon_status")['json'])['monmap']['fsid']
+        return [CephCluster(fsid=fsid)]
 
     # Added all arguments to make pylint happy:
     def save(self, force_insert=False, force_update=False, using=None,
@@ -98,6 +95,7 @@ class CephCluster(NodbModel, SendCommandApiMixin):
     @bulk_attribute_setter(['osd_flags'], catch_exceptions=(TypeError, ExternalCommandError))
     def set_osd_flags(self, objects, field_names):  # pylint: disable=W0613
         flags = self.send_command_api.osd_dump()['flags'].split(',')
+
         if 'pauserd' in flags and 'pausewr' in flags:
             # 'pause' is special:
             # To set this flag, call `ceph osd set pause`
@@ -109,10 +107,10 @@ class CephCluster(NodbModel, SendCommandApiMixin):
         self.osd_flags = flags
 
     def __str__(self):
-        return self.config_file_path
+        return self.fsid
 
     def __unicode__(self):
-        return self.config_file_path
+        return self.fsid
 
 
 class CrushmapVersion(NodbModel):
