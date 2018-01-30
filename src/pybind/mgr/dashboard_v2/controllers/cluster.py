@@ -2,7 +2,7 @@ from functools import partial
 
 from ..models.nodb import nodb_context
 from ..models.cluster import CephCluster
-from ..tools import ApiController, RESTController
+from ..tools import ApiController, RESTController, detail_route
 
 
 def nodb_serializer(model, obj):
@@ -23,3 +23,9 @@ class Cluster(RESTController):
     def get(self, _):
         with nodb_context(self):
             return cluster_serializer(CephCluster.objects.get())
+
+    @detail_route(methods=['get'])
+    def status(self, key):
+        with nodb_context(self):
+            cluster = CephCluster.objects.get(pk=key)
+            return cluster.status
