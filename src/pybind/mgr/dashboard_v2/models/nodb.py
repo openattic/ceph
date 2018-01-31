@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from functools import partial
 import json
-import logging
 import itertools
 import operator
 import copy
@@ -10,9 +9,7 @@ from six import add_metaclass
 from six.moves import reduce
 
 from ..tools import ValidationError, cached_property
-
-
-logger = logging.getLogger(__name__)
+from .. import logger
 
 
 # pylint: disable=W0212, W0613
@@ -479,8 +476,8 @@ class LazyProperty(object):
             try:
                 self.eval_func(instance, query_set, self.field_names)
             except self.catch_exceptions as _:
-                # logger.exception('failed to populate Field "{}" of {} ({})'
-                #                  .format(self.field_name, str(instance), instance.__class__))
+                logger.exception('failed to populate Field "{}" of {} ({})'
+                                 .format(self.field_name, str(instance), instance.__class__))
                 fields = instance.__class__.make_model_args({}, fields_force_none=self.field_names)
                 for field_name, value in list(fields.items()):
                     setattr(instance, field_name, value)

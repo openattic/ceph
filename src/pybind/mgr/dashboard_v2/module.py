@@ -13,6 +13,7 @@ from mgr_module import MgrModule
 from .controllers.auth import Auth
 from .tools import load_controllers, json_error_page, SessionExpireAtBrowserCloseTool
 from .settings import Settings, options_command_list, handle_option_command
+from . import logger
 
 
 # cherrypy likes to sys.exit on error.  don't let it take us down too!
@@ -40,6 +41,10 @@ class Module(MgrModule):
         }
     ]
     COMMANDS.extend(options_command_list())
+
+    def __init__(self, *args, **kwargs):
+        super(Module, self).__init__(*args, **kwargs)
+        logger.logger = self._logger
 
     def configure_module(self, in_unittest=False):
         Settings.mgr = self  # injects module instance into Settings class
@@ -87,14 +92,14 @@ class Module(MgrModule):
         self.configure_module()
 
         cherrypy.engine.start()
-        self.log.info('Waiting for engine...')
+        logger.info('Waiting for engine...')
         cherrypy.engine.block()
-        self.log.info('Engine done')
+        logger.info('Engine done')
 
     def shutdown(self):
-        self.log.info('Stopping server...')
+        logger.info('Stopping server...')
         cherrypy.engine.exit()
-        self.log.info('Stopped server')
+        logger.info('Stopped server')
 
     def handle_command(self, cmd):
         res = handle_option_command(cmd)
@@ -111,9 +116,9 @@ class Module(MgrModule):
 
         def __init__(self, mgrmod):
             self.ctrls = load_controllers(mgrmod)
-            mgrmod.log.debug('Loaded controllers: {}'.format(self.ctrls))
+            logger.debug('Loaded controllers: {}'.format(self.ctrls))
             for ctrl in self.ctrls:
-                mgrmod.log.info('Adding controller: {} -> /api/{}'
+                logger.info('Adding controller: {} -> /api/{}'
                                 .format(ctrl.__name__, ctrl._cp_path_))
                 ins = ctrl()
                 setattr(Module.ApiRoot, ctrl._cp_path_, ins)

@@ -8,6 +8,7 @@ from six.moves import reduce
 from mgr_module import MgrModule, CommandResult
 from ..tools import ExternalCommandError, cached_property
 from .nodb import NodbManager
+from .. import logger
 
 
 class SendCommandApiMixin(object):
@@ -50,8 +51,7 @@ def logged(func):
         try:
             retval = func(*args, **kwargs)
         finally:
-            pass
-            # logger.debug('{}, {}, {} -> {}'.format(func.__name__, args, kwargs, retval))
+            logger.debug('{}, {}, {} -> {}'.format(func.__name__, args, kwargs, retval))
         return retval
     return wrapper
 
@@ -71,10 +71,9 @@ def undo_transaction(undo_context, exception_type=ExternalCommandError, re_raise
         try:
             delattr(undo_context, '_undo_stack')
         except AttributeError:
-            pass
-            # logger.exception('Ignoring Attribute error here.')
+            logger.exception('Ignoring Attribute error here.')
     except exception_type as _:
-        # logger.exception('Will now undo steps performed.')
+        logger.exception('Will now undo steps performed.')
         stack = getattr(undo_context, '_undo_stack')
         delattr(undo_context, '_undo_stack')
         for undo_closure in reversed(stack):
@@ -287,10 +286,10 @@ class SendCommandApi(object):  # pylint: disable=R0904
                 raise
 
             if 'mon_allow_pool_delete' not in str(e):
-                # logger.info('Expected to find "mon_allow_pool_delete" in ""'.format(str(e)))
+                logger.info('Expected to find "mon_allow_pool_delete" in "{}"'.format(str(e)))
                 raise
 
-            # logger.info('Executing fallback for mon_allow_pool_delete=false\n{}'.format(str(e)))
+            logger.info('Executing fallback for mon_allow_pool_delete=false\n{}'.format(str(e)))
 
             mon_names = [mon['name'] for mon in
                          self._call_mon_command('mon dump')['mons']]  # ['a', 'b', 'c']
@@ -664,12 +663,12 @@ class SendCommandApi(object):  # pylint: disable=R0904
         assert isinstance(cmd, dict)
         result = CommandResult('')
 
-        # logger.debug('mod command {}, {}, {}'.format(cmd, argdict, err))
         argdict = json.dumps(
             dict(cmd, format=output_format, **argdict if argdict is not None else {}))
         self.mgr.send_command(result, 'mon', '', argdict, '')
 
         ret, out, err = result.wait()
+        logger.debug('mod command {}, {}, {}'.format(cmd, argdict, err))
 
         if ret == 0:
             if output_format == 'json':

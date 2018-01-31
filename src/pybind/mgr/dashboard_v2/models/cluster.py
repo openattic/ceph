@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import json
-import logging
 
 from .nodb import NodbModel, CharField, JsonField, ValidationError, \
                   bulk_attribute_setter
 from ..models.send_command_api import SendCommandApiMixin
 from ..tools import ExternalCommandError
 from ..tools import RESTController  # pylint: disable=W0611
-
-
-logger = logging.getLogger(__name__)
+from .. import logger
 
 
 class CephCluster(NodbModel, SendCommandApiMixin):
@@ -43,7 +40,7 @@ class CephCluster(NodbModel, SendCommandApiMixin):
                 val['timechecks'] = self.send_command_api.time_sync_status()
             except Exception:  # pylint: disable=W0703
                 # TODO: find out, which Exception is thrown.
-                # logger.exception('time_sync_status failed.')
+                logger.exception('time_sync_status failed.')
                 val['timechecks'] = {}
         val['health'] = self.send_command_api.health('detail')
         return val
@@ -80,9 +77,8 @@ class CephCluster(NodbModel, SendCommandApiMixin):
                 for flag in set(value) - set(original.osd_flags):
                     api.osd_set(flag)
             else:
-                pass
-                #  logger.warning('Tried to set "{}" to "{}" on rbd "{}", which is not '
-                #               'supported'.format(key, value, self.config_file_path))
+                logger.warning('Tried to set "{}" to "{}" on rbd "{}", which is not '
+                               'supported'.format(key, value, self.config_file_path))
 
         super(CephCluster, self).save(force_insert=force_insert, force_update=force_update,
                                       using=using, update_fields=update_fields)
