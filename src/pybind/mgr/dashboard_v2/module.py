@@ -119,7 +119,7 @@ class Module(MgrModule):
             logger.debug('Loaded controllers: {}'.format(self.ctrls))
             for ctrl in self.ctrls:
                 logger.info('Adding controller: {} -> /api/{}'
-                                .format(ctrl.__name__, ctrl._cp_path_))
+                            .format(ctrl.__name__, ctrl._cp_path_))
                 ins = ctrl()
                 setattr(Module.ApiRoot, ctrl._cp_path_, ins)
 
