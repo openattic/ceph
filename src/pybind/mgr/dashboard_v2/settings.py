@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import errno
 import inspect
-from six import with_metaclass
+from six import add_metaclass
 
 
 class Options(object):
@@ -43,8 +43,8 @@ class SettingsMeta(type):
             setattr(SettingsMeta, attr, value)
 
 
-# pylint: disable=no-init
-class Settings(with_metaclass(SettingsMeta, object)):
+@add_metaclass(SettingsMeta)
+class Settings(object):
     pass
 
 
