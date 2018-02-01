@@ -1,13 +1,8 @@
 from functools import partial
 
-from ..models.nodb import nodb_context
+from ..models.nodb import nodb_context, nodb_serializer
 from ..models.cluster import CephCluster
 from ..tools import ApiController, RESTController, detail_route
-
-
-def nodb_serializer(model, obj):
-    # pylint: disable=W0212
-    return {field.attname: getattr(obj, field.attname) for field in model._meta.fields}
 
 
 cluster_serializer = partial(nodb_serializer, CephCluster)

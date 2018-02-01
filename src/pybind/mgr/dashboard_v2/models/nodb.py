@@ -889,6 +889,11 @@ class NodbModel(object):
         return isinstance(other, self.__class__) and self.pk == other.pk
 
 
+def nodb_serializer(model, obj):
+    # pylint: disable=W0212
+    return {field.attname: getattr(obj, field.attname) for field in model._meta.fields}
+
+
 @contextmanager
 def nodb_context(ctx):
     old_ctx = NodbManager.nodb_context
