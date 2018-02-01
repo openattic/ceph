@@ -24,4 +24,4 @@ class PingTest(ControllerTestCase):
     def test_echo_args(self):
         self._post("/api/echo1", {'msg': 'Hello World'})
         self.assertStatus('201 Created')
-        self.assertJsonBody({'echo': 'Hello World'})
+        self.assertJsonBody({'echo': 'ea: Hello World'})
