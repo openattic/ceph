@@ -106,6 +106,26 @@ class BaseController(six.with_metaclass(BaseControllerMeta, object)):
         'request.error_page': {'default': json_error_page},
     }
 
+    def __init__(self):
+        self._initialized = False
+
+    def __getattribute__(self, attr):
+        obj = super(BaseController, self).__getattribute__(attr)
+        if inspect.ismethod(obj) and hasattr(obj, 'exposed') and obj.exposed \
+                and not self._initialized:
+            self.init()
+            self._initialized = True
+        return obj
+
+    def init(self):
+        """Controller lazy initialization
+
+        All the controller initialization code should be put in this method,
+        which will be executed upon the first HTTP request made to this
+        controller.
+        """
+        pass
+
     @property
     def mgr(self):
         """

@@ -16,9 +16,14 @@ class Ping(BaseController):
 
 @ApiController('echo1')
 class EchoArgs(RESTController):
+    prefix = None
+
+    def init(self):
+        self.prefix = "ea"
+
     @RESTController.args_from_json
     def create(self, msg):
-        return {'echo': msg}
+        return {'echo': "{}: {}".format(self.prefix, msg)}
 
 
 @ApiController('echo2')
