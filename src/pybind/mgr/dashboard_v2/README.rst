@@ -309,3 +309,34 @@ can be used:
 * ``health``: health status regular update
 * ``pg_summary``: regular update of PG status information
 
+
+Where to place the initialization code of a controller?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Your controllers might need to execute some initialization code before starting
+answering to requests, for instance if you need to cache some data beforehand.
+
+In ``BaseController`` there is a method called ``init()``, which can be
+overriden by subclasses, that will execute upon the first request made to the
+controller.
+
+This means that if a controller is never requested, its initialization code
+will never need to be executed as well.
+
+Example::
+
+  import cherrypy
+  from ..tools import BaseController, ApiController
+
+  @ApiController('ping3')
+  class Ping3(BaseController):
+    prefix = None
+
+    def init(self):
+      self.prefix = 'myping'
+
+    @cherrypy.expose
+    def default(self, *args):
+      return '{}: Hello'.format(self.prefix)
+
+
