@@ -71,29 +71,79 @@ Unit Testing and Linting
 ------------------------
 
 We included a ``tox`` configuration file that will run the unit tests under
-Python 2 and 3, as well as linting tools to guarantee the uniformity of code.
+Python 2 or 3, as well as linting tools to guarantee the uniformity of code.
 
-You need to install ``tox`` before running it. To install ``tox`` in your
-system, either install it via your operating system's package management
-tools, e.g. by running ``dnf install python3-tox`` on Fedora Linux.
+You need to install ``tox`` and ``coverage`` before running it. To install the
+packages in your system, either install it via your operating system's package
+management tools, e.g. by running ``dnf install python-tox python-coverage`` on
+Fedora Linux.
 
 Alternatively, you can use Python's native package installation method::
 
   $ pip install tox
+  $ pip install coverage
+
+The unit tests must run against a real Ceph cluster (no mocks are used). This
+has the advantage of catching bugs originated from changes in the internal Ceph
+code.
+
+Our ``tox.ini`` script will start a ``vstart`` Ceph cluster before running the
+python unit tests, and then it stops the cluster after the tests are run.
+Of course this implies that you have built/compiled Ceph previously.
 
 To run tox, run the following command in the root directory (where ``tox.ini``
 is located)::
 
-  $ tox
+  $ PATH=../../../../build/bin:$PATH tox
 
+We also collect coverage information from the backend code, you can check that
+coverage information in the tox output, or run the following after tox is
+finished successfully::
 
-If you just want to run a single tox environment, for instance only run the
-linting tools::
+  $ coverage html
+
+The command above will create ``htmlcov`` directory with an HTML representation
+of the code coverage of the backend.
+
+You can also run a single step of the tox script (aka tox environment), for
+instance if you only want to run the linting tools, do::
 
   $ tox -e lint
 
 Developer Notes
 ---------------
+
+
+How to run a single unit test without using ``tox``?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When developing the code of a controller and respective test code, it's usefull
+to be able to run that single test file without going through the whole ``tox``
+workflow.
+
+Since the tests must run against a real Ceph cluster, the first thing is to
+have a Ceph cluster running. For that we can leverage the tox environment that
+starts a Ceph cluster::
+
+  $ tox -e ceph-cluster-start
+
+The command above uses ``vstart.sh`` script to start a Ceph cluster and
+automatically enables the ``dashboard_v2`` module, and configures its cherrypy
+web server to listen in port ``9865``.
+
+After starting the Ceph cluster we can run our test file using ``py.test``
+like this::
+
+  $ PATH=../../../../build/bin:$PATH DASHBOARD_V2_PORT=9865 UNITTEST=true py.test -s tests/test_mycontroller.py
+
+You can run tests multiple times without having to start and stop the Ceph
+cluster.
+
+After you finish your tests, you can stop the Ceph cluster using another tox
+environment::
+
+  $ tox -e ceph-cluster-stop
+
 
 How to add a new controller?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,25 +231,70 @@ unit tests for your controller.
 If we want to write a unit test for the above ``Ping2`` controller, create a
 ``test_ping2.py`` file under the ``tests`` directory with the following code::
 
-  from .helper import ControllerTestCase
-  from .controllers.ping2 import Ping2
+  from .helper import ControllerTestCase, authenticate
 
   class Ping2Test(ControllerTestCase):
-      @classmethod
-      def setup_test(cls):
-          Ping2._cp_config['tools.authentica.on'] = False
 
+      @authenticate
       def test_ping2(self):
           self._get("/api/ping2")
           self.assertStatus(200)
           self.assertJsonBody({'msg': 'Hello'})
 
-The ``ControllerTestCase`` class will call the dashboard module code that loads
-the controllers and initializes the CherryPy webserver. Then it will call the
-``setup_test()`` class method to execute additional instructions that each test
-case needs to add to the test.
-In the example above we use the ``setup_test()`` method to disable the
-authentication handler for the ``Ping2`` controller.
+The ``ControllerTestCase`` class initializes an HTTP client session, that will
+be used to make requests to the dashboard module.
+
+We also provide the ``@authenticate`` decorator that you can use if you are
+making a request to an endpoint that requires an authenticate user.
+
+The ``ControllerTestCase`` class extends the ``unittest.TestCase`` and
+therefore you can implement the usual ``setUp``/``setUpClass`` and ``tearDown``
+/``tearDownClass`` methods to run code before and after your test methods.
+
+
+How to initialize data for a unit test?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Consider the following example that implements a controller that retrieves the
+list of RBD images of the ``rbd`` pool::
+
+  import rbd
+  from ..tools import ApiController, RESTController
+
+  @ApiController('rbdimages')
+  class RbdImages(RESTController):
+      def __init__(self):
+          self.ioctx = self.mgr.rados.open_ioctx('rbd')
+          self.rbd = rbd.RBD()
+
+      def list(self):
+          return [{'name': n} for n in self.rbd.list(self.ioctx)]
+
+To test the above controller we should create a couple of RBD images in our
+test Ceph cluster. This can be done in the test code::
+
+  from .helper import ControllerTestCase
+
+  class RbdImagesTest(ControllerTestCase):
+      @classmethod
+      def setUpClass(cls):
+          cls._ceph_cmd(['osd', 'pool', 'create', 'rbd', '100', '100'])
+          cls._ceph_cmd(['osd', 'pool', 'application', 'enable', 'rbd', 'rbd'])
+          cls._rbd_cmd(['create', '--size=1G', 'img1'])
+          cls._rbd_cmd(['create', '--size=2G', 'img2'])
+
+      @classmethod
+      def tearDownClass(cls):
+          cls._ceph_cmd(['osd', 'pool', 'delete', 'rbd', '--yes-i-really-really-mean-it'])
+
+      def test_list(self):
+          self._get('/api/rbdimages')
+          self.assertJsonBody([{'name': 'img1'}, {'name': 'img2'}])
+
+
+Never forget to remove all test specific data that you've created in the
+``tearDown`` or ``tearDownClass`` methods. That way subsequent tests can
+run in a pristine state of the Ceph cluster.
 
 
 How to add a new configuration setting?
@@ -308,38 +403,4 @@ can be used:
 * ``mon_status``: monitor status regular update
 * ``health``: health status regular update
 * ``pg_summary``: regular update of PG status information
-
-
-How to write a unit test when a controller accesses a Ceph module?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Consider the following example that implements a controller that retrieves the
-list of RBD images of the ``rbd`` pool::
-
-  import rbd
-  from ..tools import ApiController, RESTController
-
-  @ApiController('rbdimages')
-  class RbdImages(RESTController):
-      def __init__(self):
-          self.ioctx = self.mgr.rados.open_ioctx('rbd')
-          self.rbd = rbd.RBD()
-
-      def list(self):
-          return [{'name': n} for n in self.rbd.list(self.ioctx)]
-
-In the example above, we want to mock the return value of the ``rbd.list``
-function, so that we can test the JSON response of the controller.
-
-The unit test code will look like the following::
-
-  import mock
-  from .helper import ControllerTestCase
-
-  class RbdImagesTest(ControllerTestCase):
-      @mock.patch('rbd.RBD.list')
-      def test_list(self, rbd_list_mock):
-          rbd_list_mock.return_value = ['img1', 'img2']
-          self._get('/api/rbdimages')
-          self.assertJsonBody([{'name': 'img1'}, {'name': 'img2'}])
 
