@@ -206,9 +206,8 @@ Now only authenticated users will be able to "ping" your controller.
 How to access the manager module instance from a controller?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each controller class derived from ``BaseController``has a class property that
+Each controller class derived from ``BaseController`` has a class property that
 points to the manager module global instance. The property is named ``mgr``.
-There is another class property called ``logger`` to easily add log messages.
 
 Example::
 
@@ -218,8 +217,20 @@ Example::
   @ApiController('servers')
   class Servers(RESTController):
     def list(self):
-      self.logger.debug('Listing available servers')
       return {'servers': self.mgr.list_servers()}
+
+
+How to access the logger?
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We provide a global reference to the logger that can be used in any module of
+the dashboard.
+
+To get the logger just import it like this::
+
+  from . import logger
+
+The ``.`` above refers to the root module of the dashboard.
 
 
 How to write a unit test for a controller?
@@ -403,4 +414,64 @@ can be used:
 * ``mon_status``: monitor status regular update
 * ``health``: health status regular update
 * ``pg_summary``: regular update of PG status information
+
+
+How to bound the response time of a controller that gets data from the cluster?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When your controller needs to access the Ceph cluster to retrieve some data,
+(for instance get the list of RADOS pools, or get the list of RBD images,
+etc.), you may want to limit the time that the frontend will wait for your
+controller's response, by returning the information that no data could be
+retrieved within a time interval, or by returning stale data retrieved in
+previous requests.
+
+This way the frontend is in control of the requests timing and can warn or
+ask for feedback from the user, when such request takes longer than expected.
+
+To help the developer in handling these kinds of situations we provide a
+function decorator called ``@ViewCache``, which the developer can use to
+decorate a function that makes accesses to the Ceph cluster and returns data.
+
+Example::
+
+  import rbd
+  from ..tools import ApiController, RESTController, ViewCache
+
+
+  @ApiController('rbd')
+  class Rbd(RESTController):
+      def __init__(self):
+          super(Rbd, self).__init__()
+          self.rbd = rbd.RBD()
+
+      @ViewCache()
+      def image_list(self, pool_name):
+          ioctx = self.mgr.rados.open_ioctx(pool_name)
+          return self.rbd.list(ioctx)
+
+      def list(self, pool_name):
+          state, imglist = self.image_list(pool_name)
+          if state == ViewCache.VALUE_EXCEPTION:
+              result = str(imglist)
+          elif state == ViewCache.VALUE_NONE:
+              result = None
+          elif not imglist:
+              result = []
+          else:
+              result = [{'name': n} for n in imglist] if imglist else None
+          return {'state': state, 'result': result}
+
+When decorating a function with ``@ViewCache``, that function is transformed
+to also return a state flag besides the data that was already being returned by
+the function.
+The ``@ViewCache`` accepts a timeout argument in seconds that specifies the
+time to wait for the function to return. The default timeout is 5 seconds.
+
+The state flag can have four different values:
+
+* ``VALUE_OK = 0``: the returned data is fresh.
+* ``VALUE_STALE = 1``: the returned data might be stale.
+* ``VALUE_NODE = 2``: no data could be returned.
+* ``VALUE_EXCEPTION = 3``: an exception was raised while running the function.
 
