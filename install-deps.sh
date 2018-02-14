@@ -105,6 +105,62 @@ EOF
     fi
 }
 
+function ensure_min_npm_version {
+  local install_npm_pkg_cmd=$1
+
+  if ! type npm > /dev/null 2>&1; then
+    $SUDO $install_npm_pkg_cmd
+  fi
+
+  NODE_VER=`node -v`
+  NODE_VER_MAJOR=`node -v | sed 's/v\(\w\+\).*/\1/g'`
+  NODE_VER_MINOR=`node -v | sed 's/v\w\+\.\(\w\+\).*/\1/g'`
+
+  # The minimum node version required is 4.8.0 so that we can use yarn below
+  UPDATE_NODE=false
+  if [ $NODE_VER_MAJOR -lt 4 ]; then
+    UPDATE_NODE=true
+  elif [ $NODE_VER_MAJOR -eq 4 ] && [ $NODE_VER_MINOR -lt 8 ]; then
+    UPDATE_NODE=true
+  fi
+  if $UPDATE_NODE; then
+    $SUDO npm install -g n
+    $SUDO n 4.8.0  # installs nodejs version 4.8.0
+    $SUDO npm uninstall -g n
+    hash -d node > /dev/null 2>&1 || true
+  fi
+
+  NPM_VER=`npm -v`
+  NPM_VER_MAJOR=`npm -v | sed 's/\(\w\+\).*/\1/g'`
+
+  # The minimum npm version required is 5.0.0 so that we can install and use
+  # a local nodejs installation (required by the dashboard angular2 frontend)
+  if [ $NPM_VER_MAJOR -lt 5 ]; then
+    $SUDO npm install -g yarn
+    $SUDO yarn global add npm@^5.0.0  # install npm version 5.0.0 or later
+  fi
+  hash -d npm > /dev/null 2>&1 || true
+
+  NEW_NODE_VER=`node -v`
+  NEW_NPM_VER=`npm -v`
+  if [ ! "$NODE_VER" = "$NEW_NODE_VER" ]; then
+cat <<EOF
+*****************************************************************************
+      YOUR NODE VERSION WAS UPDATED FROM $NODE_VER TO $NEW_NODE_VER
+*****************************************************************************
+EOF
+  fi
+  if [ ! "$NPM_VER" = "$NEW_NPM_VER" ]; then
+cat <<EOF
+*****************************************************************************
+      YOUR NPM VERSION WAS UPDATED FROM $NPM_VER TO $NEW_NPM_VER
+      TO RETURN TO VERSION $NPM_VER run the following command:
+          $ $SUDO yarn global remove npm && hash -d npm
+*****************************************************************************
+EOF
+  fi
+}
+
 if [ x`uname`x = xFreeBSDx ]; then
     $SUDO pkg install -yq \
         devel/babeltrace \
@@ -190,6 +246,9 @@ else
 	$SUDO env DEBIAN_FRONTEND=noninteractive mk-build-deps --install --remove --tool="apt-get -y --no-install-recommends $backports" $control || exit 1
 	$SUDO env DEBIAN_FRONTEND=noninteractive apt-get -y remove ceph-build-deps
 	if [ -n "$backports" ] ; then rm $control; fi
+        $SUDO env DEBIAN_FRONTEND=noninteractive apt-get -y install nodejs
+        [ ! -e /usr/bin/node ] && $SUDO env DEBIAN_FRONTEND=noninteractive apt-get -y install nodejs-legacy
+        ensure_min_npm_version "env DEBIAN_FRONTEND=noninteractive apt-get -y install npm"
         ;;
     centos|fedora|rhel|ol|virtuozzo)
         yumdnf="yum"
@@ -250,6 +309,7 @@ else
             ensure_decent_gcc_on_rh $dts_ver
 	fi
         ! grep -q -i error: $DIR/yum-builddep.out || exit 1
+        ensure_min_npm_version "$yumdnf install -y npm"
         ;;
     opensuse|suse|sles)
         echo "Using zypper to install dependencies"
@@ -257,6 +317,7 @@ else
         $SUDO $zypp_install lsb-release systemd-rpm-macros
         munge_ceph_spec_in $DIR/ceph.spec
         $SUDO $zypp_install $(rpmspec -q --buildrequires $DIR/ceph.spec) || exit 1
+        ensure_min_npm_version "zypper --non-interactive install npm"
         ;;
     alpine)
         # for now we need the testing repo for leveldb
