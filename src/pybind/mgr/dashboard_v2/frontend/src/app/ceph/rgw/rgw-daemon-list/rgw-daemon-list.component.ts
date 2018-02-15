@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
+import { CellTemplate } from '../../../shared/enum/cell-template.enum';
 import { CdTableColumn } from '../../../shared/models/cd-table-column';
-import { CephShortVersionPipe } from '../../../shared/pipes/ceph-short-version.pipe';
 import { RgwDaemonService } from '../services/rgw-daemon.service';
 
 @Component({
@@ -21,18 +21,18 @@ export class RgwDaemonListComponent implements OnInit {
       {
         name: 'ID',
         prop: 'id',
-        width: 100
+        flexGrow: 2
       },
       {
         name: 'Hostname',
         prop: 'server_hostname',
-        width: 100
+        flexGrow: 2
       },
       {
         name: 'Version',
         prop: 'version',
-        width: 50,
-        pipe: new CephShortVersionPipe()
+        flexGrow: 1,
+        cellTransformation: CellTemplate.cephShortVersion
       }
     ];
   }

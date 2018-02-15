@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
-import { ServiceListPipe } from '../service-list.pipe';
-
-import { CephShortVersionPipe } from '../../../shared/pipes/ceph-short-version.pipe';
+import { CellTemplate } from '../../../shared/enum/cell-template.enum';
+import { CdTableColumn } from '../../../shared/models/cd-table-column';
 import { HostService } from '../../../shared/services/host.service';
+import { ServiceListPipe } from '../service-list.pipe';
 
 @Component({
   selector: 'cd-hosts',
@@ -12,11 +12,10 @@ import { HostService } from '../../../shared/services/host.service';
 })
 export class HostsComponent implements OnInit {
 
-  columns: Array<object> = [];
+  columns: Array<CdTableColumn> = [];
   hosts: Array<object> = [];
 
   constructor(private hostService: HostService,
-              cephShortVersionPipe: CephShortVersionPipe,
               serviceListPipe: ServiceListPipe) {
     this.columns = [
       {
@@ -34,7 +33,7 @@ export class HostsComponent implements OnInit {
         name: 'Version',
         prop: 'ceph_version',
         flexGrow: 1,
-        pipe: cephShortVersionPipe
+        cellTransformation: CellTemplate.cephShortVersion
       }
     ];
   }

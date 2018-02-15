@@ -27,6 +27,7 @@ export class TableComponent implements AfterContentChecked, OnInit, OnChanges {
   @ViewChild(DatatableComponent) table: DatatableComponent;
   @ViewChild(TableDetailsDirective) detailTemplate: TableDetailsDirective;
   @ViewChild('tableCellBoldTpl') tableCellBoldTpl: TemplateRef<any>;
+  @ViewChild('tableCellCephShortVersionTpl') tableCellCephShortVersionTpl: TemplateRef<any>;
 
   // This is the array with the items to be shown.
   @Input() data: any[];
@@ -100,6 +101,7 @@ export class TableComponent implements AfterContentChecked, OnInit, OnChanges {
 
   _addTemplates () {
     this.cellTemplates.bold = this.tableCellBoldTpl;
+    this.cellTemplates.cephShortVersion = this.tableCellCephShortVersionTpl;
   }
 
   ngOnChanges(changes) {

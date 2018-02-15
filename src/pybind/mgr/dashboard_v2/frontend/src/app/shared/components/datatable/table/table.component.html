@@ -70,7 +70,10 @@
 <ng-template cdTableDetails></ng-template>
 <!-- cell templates that can be accessed from outside -->
 <ng-template #tableCellBoldTpl
-             let-row="row"
              let-value="value">
   <strong>{{ value }}</strong>
+</ng-template>
+<ng-template #tableCellCephShortVersionTpl
+             let-value="value">
+  {{ value | cephShortVersion }}
 </ng-template>
