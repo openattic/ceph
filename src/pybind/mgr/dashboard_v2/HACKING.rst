@@ -111,7 +111,7 @@ Backend Development
 The Python backend code of this module requires a number of Python modules to be
 installed. They are listed in file ``requirements.txt``. Using `pip
 <https://pypi.python.org/pypi/pip>`_ you may install all required dependencies
-by issuing ``pip -r requirements.txt`` in directory
+by issuing ``pip install -r requirements.txt`` in directory
 ``src/pybind/mgr/dashboard_v2``.
 
 If you're using the `ceph-dev-docker development environment
