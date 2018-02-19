@@ -55,6 +55,7 @@
     "karma-junit-reporter": "^1.2.0",
     "karma-phantomjs-launcher": "^1.0.4",
     "node": "^8.9.4",
+    "node-bin-setup": "^1.0.6",
     "protractor": "~5.1.2",
     "ts-node": "~3.2.0",
     "tslint": "~5.9.1",
