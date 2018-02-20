@@ -20,8 +20,8 @@ def authenticate(func):
 
 
 class ControllerTestCase(unittest.TestCase):
-    DASHBOARD_HOST = os.environ.get('DASHBOARD_V2_HOST', "localhost")
-    DASHBOARD_PORT = os.environ.get('DASHBOARD_V2_PORT', 8080)
+    DASHBOARD_HOST = os.environ.get('DASHBOARD_HOST', "localhost")
+    DASHBOARD_PORT = os.environ.get('DASHBOARD_PORT', 8080)
 
     def __init__(self, *args, **kwargs):
         self.dashboard_host = kwargs.pop('dashboard_host') \
