@@ -4,16 +4,15 @@ import unittest
 import mock
 
 from ..models.nodb import nodb_context
+from ..models.cluster import CephCluster
 
 
-@unittest.skip("This tests need to be adapted, no more mgr_module available")
 class CephClusterTestCase(unittest.TestCase):
     @mock.patch('dashboard_v2.models.send_command_api.SendCommandApi')
     def test_pause_flag(self, SendCommandApi_mock):
         SendCommandApi_mock.return_value.osd_dump.return_value = {
             'flags': 'pauserd,pausewr,sortbitwise,recovery_deletes'
         }
-        from ..models.cluster import CephCluster
         with nodb_context(mock.Mock()):
             self.assertEqual(set(CephCluster(fsid='fsid').osd_flags), {
                 'pause', 'sortbitwise', 'recovery_deletes'
@@ -24,7 +23,6 @@ class CephClusterTestCase(unittest.TestCase):
     def test_save(self, _call_mon_command_mock, get_modified_fields_mock):
         api_controller = mock.MagicMock()
         api_controller.mgr.get.return_value = {'json': json.dumps({'monmap': {'fsid': 'xyz'}})}
-        from ..models.cluster import CephCluster
         with nodb_context(api_controller):
             cluster = CephCluster.objects.get()
             get_modified_fields_mock.return_value = ({
