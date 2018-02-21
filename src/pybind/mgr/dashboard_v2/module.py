@@ -22,7 +22,7 @@ if 'COVERAGE_ENABLED' in os.environ:
 # pylint: disable=wrong-import-position
 from .controllers.auth import Auth
 from .tools import load_controllers, json_error_page, SessionExpireAtBrowserCloseTool, \
-                   NotificationQueue
+    NotificationQueue, AuthRequired
 from .settings import Settings, options_command_list, handle_option_command
 from . import logger
 
@@ -163,6 +163,7 @@ class Module(MgrModule):
     def notify(self, notify_type, notify_id):
         NotificationQueue.new_notification(notify_type, notify_id)
 
+    @AuthRequired()
     class ApiRoot(object):
 
         def __init__(self, mgrmod):

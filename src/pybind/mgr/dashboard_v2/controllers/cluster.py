@@ -2,7 +2,7 @@ from functools import partial
 
 from ..models.nodb import nodb_context
 from ..models.cluster import CephCluster
-from ..tools import ApiController, RESTController, detail_route
+from ..tools import ApiController, RESTController, detail_route, AuthRequired
 
 
 def nodb_serializer(model, obj):
@@ -14,6 +14,7 @@ cluster_serializer = partial(nodb_serializer, CephCluster)
 
 
 @ApiController('cluster')
+@AuthRequired()
 class Cluster(RESTController):
 
     def list(self):
