@@ -15,6 +15,7 @@ import {
 import { DatatableComponent, SortDirection, SortPropDir } from '@swimlane/ngx-datatable';
 import * as _ from 'lodash';
 
+import { CellTemplate } from '../../enum/cell-template.enum';
 import { CdTableColumn } from '../../models/cd-table-column';
 import { TableDetailsDirective } from '../table-details.directive';
 
@@ -174,17 +175,44 @@ export class TableComponent implements AfterContentChecked, OnInit, OnChanges {
     if (!event) {
       this.search = '';
     }
-    const val = this.search.toLowerCase();
-    const columns = this.columns;
+    const columns = this.columns.filter(c => c.cellTransformation !== CellTemplate.sparkline);
     // update the rows
-    this.rows = this.data.filter(function (d) {
-      return columns.filter((c) => {
-        return (typeof d[c.prop] === 'string' || typeof d[c.prop] === 'number')
-          && (d[c.prop] + '').toLowerCase().indexOf(val) !== -1;
-      }).length > 0;
-    });
+    this.rows = this.subSearch(this.data, this.search.toLowerCase().split(/[, ]/), columns);
     // Whenever the filter changes, always go back to the first page
     this.table.offset = 0;
+  }
+
+  subSearch (data, searchArray, columns) {
+    let tempColumns;
+    if (searchArray.length === 0 || data.length === 0) {
+      return data;
+    }
+    const searchWords = searchArray.pop().split(':');
+    if (searchWords.length === 2) {
+      tempColumns = [...columns];
+      columns = columns.filter((c) => c.prop.toLowerCase() === searchWords[0].toLowerCase());
+    }
+    const searchWord: string = _.last(searchWords);
+    if (searchWord.length > 0) {
+      data = data.filter(d => {
+        return columns.filter(c => {
+          let cellValue = _.get(d, c.prop);
+          if (_.isUndefined(cellValue)){
+            return;
+          }
+          if (_.isArray(cellValue)) {
+            cellValue = cellValue.join('');
+          } else if (_.isNumber(cellValue)) {
+            cellValue = cellValue.toString();
+          }
+          return cellValue.toLowerCase().indexOf(searchWord) !== -1;
+        }).length > 0;
+      });
+    }
+    if (_.isArray(tempColumns)) {
+      columns = tempColumns;
+    }
+    return this.subSearch(data, searchArray, columns);
   }
 
   getRowClass() {
