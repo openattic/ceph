@@ -79,6 +79,26 @@ describe('TableComponent', () => {
     expect(component.rows.length).toBe(3);
   });
 
+  it('should search for multiple values', () => {
+    expect(component.rows.length).toBe(100);
+    component.search = '7 5 3';
+    component.updateFilter(true);
+    expect(component.rows[0]).toEqual({a: 57, b: 3249, c: -7});
+    expect(component.rows.length).toBe(2);
+  });
+
+  it('should search with column filter', () => {
+    expect(component.rows.length).toBe(100);
+    component.search = 'b:1369';
+    component.updateFilter(true);
+    expect(component.rows[0]).toEqual({a: 37, b: 1369, c: -7});
+    expect(component.rows.length).toBe(1);
+    component.search = 'a:7 b:5 c:3';
+    component.updateFilter(true);
+    expect(component.rows[0]).toEqual({a: 73, b: 5329, c: -3});
+    expect(component.rows.length).toBe(1);
+  });
+
   it('should restore full table after search', () => {
     component.search = '13';
     expect(component.rows.length).toBe(100);
