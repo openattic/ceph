@@ -15,7 +15,7 @@ from ..tools import Session
 class AuthTest(ControllerTestCase):
     def setUp(self):
         self.reset_session()
-        self._ceph_cmd(['dashboard', 'set-session-expire', '2'])
+        self._ceph_cmd(['dashboard', 'set-session-expire', '2'], ignore_exit_status=True)
         self._ceph_cmd(['dashboard', 'set-login-credentials', 'admin', 'admin'])
 
     def test_a_set_login_credentials(self):

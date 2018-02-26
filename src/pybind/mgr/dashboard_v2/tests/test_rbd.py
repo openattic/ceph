@@ -16,7 +16,7 @@ class RbdTest(ControllerTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls._ceph_cmd(['osd', 'pool', 'delete', 'rbd', '--yes-i-really-really-mean-it'])
+        cls._ceph_cmd(['osd', 'pool', 'delete', 'rbd', 'rbd', '--yes-i-really-really-mean-it'])
 
     @authenticate
     def test_list(self):

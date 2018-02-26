@@ -9,7 +9,7 @@ from ..controllers.summary import Summary
 from ..controllers.rbd_mirroring import RbdMirror
 from ..services import Service
 from ..tools import SessionExpireAtBrowserCloseTool
-from .helper import ControllerTestCase
+from .helper import ControllerTestCase, authenticate
 
 
 mock_list_servers = [{
@@ -103,3 +103,55 @@ class RbdMirroringControllerTest(ControllerTestCase, CPWebCase):
         self.assertStatus(200)
         summary = data['rbd_mirroring']
         self.assertEqual(summary, {'errors': 0, 'warnings': 1})
+
+
+class RbdMirrorApiTest(ControllerTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cmds = """
+        !ceph osd pool delete rbd rbd --yes-i-really-really-mean-it
+        !ceph osd --cluster primary pool delete rbd rbd --yes-i-really-really-mean-it
+
+        # pool creation on primary
+        ceph --cluster primary osd pool create rbd 100 100
+        ceph --cluster primary osd pool application enable rbd rbd
+
+        # pool creation on ceph
+        ceph osd pool create rbd 100 100
+        ceph osd pool application enable rbd rbd
+
+        # enable mirroring pool mode in primary
+        rbd --cluster primary mirror pool enable rbd pool
+
+        # enable mirroring pool mode in ceph
+        rbd mirror pool enable rbd pool
+
+        # add primary cluster to ceph list of peers
+        rbd mirror pool peer add rbd client.admin@primary
+
+        # Now the setup is ready, each rbd image that is created in the primary cluster
+        # is automatically replicated to the ceph cluster
+
+        # creating img1 and run some write operations
+        rbd --cluster primary create --size=1G img1 --image-feature=journaling,exclusive-lock
+        # rbd --cluster primary bench --io-total=32M --io-type=write --io-pattern=rand img1
+        """
+        cls.tearDownClass()
+        cls._run_multiple_cmds(cmds)
+
+    @classmethod
+    def tearDownClass(cls):
+        cmds = """
+        !ceph osd pool delete rbd rbd --yes-i-really-really-mean-it
+        !ceph osd --cluster primary pool delete rbd rbd --yes-i-really-really-mean-it
+        """
+        cls._run_multiple_cmds(cmds)
+
+    @authenticate
+    def test_content_data(self):
+        result = self._get('/api/rbdmirror')
+        self.assertStatus(200)
+        self.assertEqual(result['status'], 0)
+        for k in ['daemons', 'pools', 'image_error', 'image_syncing', 'image_ready']:
+            self.assertIn(k, result['content_data'])

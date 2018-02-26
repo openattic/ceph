@@ -4,10 +4,11 @@ from __future__ import absolute_import
 
 import os
 import subprocess
-import sys
 import unittest
 
 import requests
+
+from .. import logger
 
 
 def authenticate(func):
@@ -78,18 +79,22 @@ class ControllerTestCase(unittest.TestCase):
         self.assertEqual(self._resp.status_code, status)
 
     @classmethod
-    def _cmd(cls, cmd):
-        if sys.version_info > (3, 0):
-            res = subprocess.run(cmd, stdout=subprocess.PIPE).stdout
-        else:
-            res = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
-        return res.decode('utf-8').strip()
+    def _cmd(cls, cmd, ignore_exit_status=False):
+        logger.info('running %s', cmd)
+        try:
+            res = subprocess.check_output(cmd)
+            return res.decode('utf-8').strip()
+        except subprocess.CalledProcessError as e:
+            if not ignore_exit_status:
+                logger.error('Status : FAIL\nreturncode=%s\noutput=%s', e.returncode, e.output)
+                raise
+            return None
 
     @classmethod
-    def _ceph_cmd(cls, cmd):
+    def _ceph_cmd(cls, cmd, ignore_exit_status=False):
         _cmd = ['ceph']
         _cmd.extend(cmd)
-        return cls._cmd(_cmd)
+        return cls._cmd(_cmd, ignore_exit_status)
 
     @classmethod
     def set_config_key(cls, key, value):
@@ -98,6 +103,24 @@ class ControllerTestCase(unittest.TestCase):
     @classmethod
     def get_config_key(cls, key):
         return cls._ceph_cmd(['config-key', 'get', key])
+
+    # pylint: disable=anomalous-backslash-in-string
+    @classmethod
+    def _run_multiple_cmds(cls, cmds):
+        """
+        :param cmds: list of commands.
+            * newline divided
+            * space at line start is ignored
+            * ^\s*# = line ignored
+            * ^\s*! = exit status ignored.
+        """
+        for cmd in cmds.splitlines():
+            cmd = cmd.strip()
+            if cmd and not cmd.startswith('#'):
+                if cmd.startswith('!'):
+                    cls._cmd(cmd[1:].split(' '), ignore_exit_status=True)
+                else:
+                    cls._cmd(cmd.split(' '))
 
     @classmethod
     def _rbd_cmd(cls, cmd):
