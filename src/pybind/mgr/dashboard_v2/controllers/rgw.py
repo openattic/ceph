@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import json
 
 from .. import logger
-from ..services.ceph_service import CephService
+from ..services.ceph_service import CephServiceMixin
 from ..tools import ApiController, RESTController, AuthRequired
 
 
@@ -16,11 +16,11 @@ class Rgw(RESTController):
 
 @ApiController('rgw/daemon')
 @AuthRequired()
-class RgwDaemon(RESTController):
+class RgwDaemon(RESTController, CephServiceMixin):
 
     def list(self):
         daemons = []
-        for hostname, server in CephService.get_service_map('rgw').items():
+        for hostname, server in self.get_service_map('rgw').items():
             for service in server['services']:
                 metadata = service['metadata']
                 status = service['status']
@@ -50,7 +50,7 @@ class RgwDaemon(RESTController):
             'rgw_id': svc_id,
             'rgw_status': []
         }
-        service = CephService.get_service('rgw', svc_id)
+        service = self.get_service('rgw', svc_id)
         if not service:
             return daemon
 

@@ -3,7 +3,6 @@ import cherrypy
 import mock
 
 from ..controllers.auth import Auth
-from ..services import Service
 from ..tools import SessionExpireAtBrowserCloseTool
 from ..controllers.tcmu_iscsi import TcmuIscsi
 from .helper import ControllerTestCase
@@ -57,7 +56,6 @@ class TcmuIscsiControllerTest(ControllerTestCase, CPWebCase):
         mgr_mock.get_counter.return_value = mocked_get_counter
         mgr_mock.get_rate.return_value = mocked_get_rate
         mgr_mock.url_prefix = ''
-        Service.mgr = mgr_mock
         TcmuIscsi.mgr = mgr_mock
         TcmuIscsi._cp_config['tools.authenticate.on'] = False  # pylint: disable=protected-access
 

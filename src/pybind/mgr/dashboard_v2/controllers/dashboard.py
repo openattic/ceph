@@ -9,7 +9,6 @@ import time
 import cherrypy
 from mgr_module import CommandResult
 
-from ..services.ceph_service import CephService
 from ..tools import ApiController, AuthRequired, BaseController, NotificationQueue, ViewCache
 
 

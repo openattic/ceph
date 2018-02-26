@@ -5,17 +5,16 @@ import json
 
 import cherrypy
 
-from ..controllers.rbd_mirroring import get_daemons_and_pools
 from ..tools import AuthRequired, ApiController, BaseController
-from ..services.ceph_service import CephService
+from ..services.ceph_service import CephPoolMixin, CephServiceMixin
 from .. import logger
 
 
 @ApiController('summary')
 @AuthRequired()
-class Summary(BaseController):
+class Summary(BaseController, CephServiceMixin, CephPoolMixin):
     def _rbd_pool_data(self):
-        pool_names = [pool['pool_name'] for pool in CephService.get_pool_list('rbd')]
+        pool_names = [pool['pool_name'] for pool in self.get_pool_list('rbd')]
         return sorted(pool_names)
 
     def _health_status(self):
@@ -33,11 +32,11 @@ class Summary(BaseController):
         ]
 
     def _rbd_mirroring(self):
-        _, data = get_daemons_and_pools(self.mgr)
+        _, data = self.get_daemons_and_pools()
 
         if isinstance(data, Exception):
             logger.exception("Failed to get rbd-mirror daemons and pools")
-            raise type(data)(str(data))
+            raise type(data)(str(data))  # pylint: disable=E0710
         else:
             daemons = data.get('daemons', [])
             pools = data.get('pools', {})

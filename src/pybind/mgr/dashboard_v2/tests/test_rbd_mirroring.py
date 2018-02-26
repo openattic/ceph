@@ -7,7 +7,6 @@ from cherrypy.test.helper import CPWebCase
 from ..controllers.auth import Auth
 from ..controllers.summary import Summary
 from ..controllers.rbd_mirroring import RbdMirror
-from ..services import Service
 from ..tools import SessionExpireAtBrowserCloseTool
 from .helper import ControllerTestCase
 
@@ -73,8 +72,6 @@ class RbdMirroringControllerTest(ControllerTestCase, CPWebCase):
         mgr_mock.get_mgr_id.return_value = 0
         mgr_mock.have_mon_connection.return_value = True
 
-        Service.mgr = mgr_mock
-
         RbdMirror.mgr = mgr_mock
         RbdMirror._cp_config['tools.authenticate.on'] = False  # pylint: disable=protected-access
 
@@ -97,7 +94,8 @@ class RbdMirroringControllerTest(ControllerTestCase, CPWebCase):
             self.assertIn(k, result['content_data'])
 
     @mock.patch('dashboard_v2.controllers.rbd_mirroring.rbd')
-    def test_summary(self, rbd_mock):  # pylint: disable=W0613
+    @mock.patch('dashboard_v2.services.ceph_service.rbd')
+    def test_summary(self, rbd_mock, rbd_mock2):  # pylint: disable=W0613
         """We're also testing `summary`, as it also uses code from `rbd_mirroring.py`"""
         data = self._get('/api/test/summary')
         self.assertStatus(200)

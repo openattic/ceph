@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import cherrypy
 
-from ..services.ceph_service import CephService
+from ..services.ceph_service import CephServiceMixin
 from ..tools import ApiController, AuthRequired, RESTController
 
 SERVICE_TYPE = 'tcmu-runner'
@@ -11,12 +11,12 @@ SERVICE_TYPE = 'tcmu-runner'
 
 @ApiController('tcmuiscsi')
 @AuthRequired()
-class TcmuIscsi(RESTController):
+class TcmuIscsi(RESTController, CephServiceMixin):
     # pylint: disable=too-many-locals,too-many-nested-blocks
     def list(self):  # pylint: disable=unused-argument
         daemons = {}
         images = {}
-        for service in CephService.get_service_list(SERVICE_TYPE):
+        for service in self.get_service_list(SERVICE_TYPE):
             metadata = service['metadata']
             status = service['status']
             hostname = service['hostname']
