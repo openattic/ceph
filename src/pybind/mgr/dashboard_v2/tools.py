@@ -521,3 +521,20 @@ class NotificationQueue(threading.Thread):
         self.notify_listeners(self._queue)
         self._queue.clear()
         logger.debug("notification queue finished")
+
+
+def aggregate_dict(*args, **kwargs):
+    """
+    >>> assert aggregate_dict({1:2}, {3:4}, a=5) == {1:2, 3:4, 'a':5}
+
+        You can also overwrite keys:
+    >>> assert aggregate_dict({1:2}, {1:4}) == {1:4}
+
+
+    :rtype: dict[str, Any]
+    """
+    ret = {}
+    for arg in args:
+        ret.update(arg)
+    ret.update(**kwargs)
+    return ret

@@ -5,7 +5,7 @@ import itertools
 import operator
 import copy
 
-from six import add_metaclass
+from six import add_metaclass, string_types
 from six.moves import reduce
 
 from ..tools import ValidationError, cached_property
@@ -156,7 +156,7 @@ class IntegerField(JsonField):
 
 class CharField(JsonField):
     def __init__(self, choices=None, **kwargs):
-        super(CharField, self).__init__(base_type=str, **kwargs)
+        super(CharField, self).__init__(base_type=string_types, **kwargs)
 
 
 class BooleanField(JsonField):
