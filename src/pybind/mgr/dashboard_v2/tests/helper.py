@@ -104,3 +104,7 @@ class ControllerTestCase(unittest.TestCase):
         _cmd = ['rbd']
         _cmd.extend(cmd)
         return cls._cmd(_cmd)
+
+
+skip_if_not_loaded_by_mgr = unittest.skipIf(bool(os.environ.get('SKIP_LOADED_BY_MGR', False)),
+                                            'Needs to run in mgr')

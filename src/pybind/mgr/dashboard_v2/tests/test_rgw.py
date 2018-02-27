@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from .helper import ControllerTestCase, authenticate
+from .helper import ControllerTestCase, authenticate, skip_if_not_loaded_by_mgr
 
 
+@skip_if_not_loaded_by_mgr
 class RgwControllerTest(ControllerTestCase):
 
     @authenticate

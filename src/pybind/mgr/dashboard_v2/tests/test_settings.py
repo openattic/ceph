@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from .helper import ControllerTestCase
+from .helper import ControllerTestCase, skip_if_not_loaded_by_mgr
 
 
+@skip_if_not_loaded_by_mgr
 class SettingsTest(ControllerTestCase):
     def setUp(self):
         val = self._ceph_cmd(['dashboard', 'get-grafana-api-port'])

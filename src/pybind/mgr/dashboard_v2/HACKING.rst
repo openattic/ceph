@@ -506,3 +506,22 @@ The unit test code will look like the following::
           rbd_list_mock.return_value = ['img1', 'img2']
           self._get('/api/rbdimages')
           self.assertJsonBody([{'name': 'img1'}, {'name': 'img2'}])
+
+
+How to execute unit tests without a running Ceph cluster?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are some unit tests that don't require a running Ceph cluster. Executing
+these tests can be done manually by running ``py.test``::
+
+  $ . .tox/py3/bin/activate  # for Python 2.7: . .tox/py27/bin/activate
+  $ PYTHONPATH=$(realpath ../../../../build/lib/cython_modules/lib.2) \
+    UNITTEST=true \
+    SKIP_LOADED_BY_MGR=true \
+    LD_LIBRARY_PATH=$(realpath ../../../../build/lib) \
+    WEBTEST_INTERACTIVE=false py.test tests/
+
+Running tests without a Ceph cluster has another benefit: These tests can
+be executed in Python 2 an Python 3 without recompiling Ceph.
+
+All tests that are annotated with `@skip_if_not_loaded_by_mgr` are skipped.

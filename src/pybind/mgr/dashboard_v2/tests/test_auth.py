@@ -6,12 +6,11 @@ import os
 import time
 from unittest import skipIf
 
-from mock import patch
-
-from .helper import ControllerTestCase
+from .helper import ControllerTestCase, skip_if_not_loaded_by_mgr
 from ..tools import Session
 
 
+@skip_if_not_loaded_by_mgr
 class AuthTest(ControllerTestCase):
     def setUp(self):
         self.reset_session()
