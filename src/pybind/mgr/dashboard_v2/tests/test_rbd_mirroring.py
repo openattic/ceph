@@ -83,7 +83,8 @@ class RbdMirroringControllerTest(ControllerTestCase, CPWebCase):
         super(RbdMirroringControllerTest, self).__init__(*args, dashboard_port=54583, **kwargs)
 
     @mock.patch('dashboard_v2.controllers.rbd_mirroring.rbd')
-    def test_default(self, rbd_mock):  # pylint: disable=W0613
+    @mock.patch('dashboard_v2.services.ceph_service.rbd')
+    def test_default(self, rbd_mock, rbd_mock2):  # pylint: disable=W0613
         self._get('/api/test/rbdmirror')
         result = self.jsonBody()
         self.assertStatus(200)
@@ -92,7 +93,8 @@ class RbdMirroringControllerTest(ControllerTestCase, CPWebCase):
             self.assertIn(k, result['content_data'])
 
     @mock.patch('dashboard_v2.controllers.rbd_mirroring.rbd')
-    def test_summary(self, rbd_mock):  # pylint: disable=W0613
+    @mock.patch('dashboard_v2.services.ceph_service.rbd')
+    def test_summary(self, rbd_mock, rbd_mock2):  # pylint: disable=W0613
         """We're also testing `summary`, as it also uses code from `rbd_mirroring.py`"""
         data = self._get('/api/test/summary')
         self.assertStatus(200)
