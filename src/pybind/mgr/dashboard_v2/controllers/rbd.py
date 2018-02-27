@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import math
 import rbd
 
 from .. import mgr
@@ -10,6 +11,18 @@ from ..tools import ApiController, AuthRequired, RESTController, ViewCache
 @ApiController('rbd')
 @AuthRequired()
 class Rbd(RESTController):
+
+    RBD_FEATURES_NAME_MAPPING = {
+        rbd.RBD_FEATURE_LAYERING: "layering",
+        rbd.RBD_FEATURE_STRIPINGV2: "striping",
+        rbd.RBD_FEATURE_EXCLUSIVE_LOCK: "exclusive-lock",
+        rbd.RBD_FEATURE_OBJECT_MAP: "object-map",
+        rbd.RBD_FEATURE_FAST_DIFF: "fast-diff",
+        rbd.RBD_FEATURE_DEEP_FLATTEN: "deep-flatten",
+        rbd.RBD_FEATURE_JOURNALING: "journaling",
+        rbd.RBD_FEATURE_DATA_POOL: "data-pool",
+        rbd.RBD_FEATURE_OPERATIONS: "operations",
+    }
 
     def __init__(self):
         self.rbd = None
@@ -22,20 +35,23 @@ class Rbd(RESTController):
         >>> Rbd._format_bitmask(45)
         'deep-flatten, exclusive-lock, layering, object-map'
         """
-        RBD_FEATURES_NAME_MAPPING = {
-            rbd.RBD_FEATURE_LAYERING: "layering",
-            rbd.RBD_FEATURE_STRIPINGV2: "striping",
-            rbd.RBD_FEATURE_EXCLUSIVE_LOCK: "exclusive-lock",
-            rbd.RBD_FEATURE_OBJECT_MAP: "object-map",
-            rbd.RBD_FEATURE_FAST_DIFF: "fast-diff",
-            rbd.RBD_FEATURE_DEEP_FLATTEN: "deep-flatten",
-            rbd.RBD_FEATURE_JOURNALING: "journaling",
-            rbd.RBD_FEATURE_DATA_POOL: "data-pool",
-            rbd.RBD_FEATURE_OPERATIONS: "operations",
-        }
-        names = [val for key, val in RBD_FEATURES_NAME_MAPPING.items()
+        names = [val for key, val in Rbd.RBD_FEATURES_NAME_MAPPING.items()
                  if key & features == key]
         return ', '.join(sorted(names))
+
+    @staticmethod
+    def _format_features(features):
+        """
+        Converts the features list to bitmask:
+
+        >>> Rbd._format_features(['deep-flatten', 'exclusive-lock', 'layering', 'object-map'])
+        45
+        """
+        res = 0
+        for key, value in Rbd.RBD_FEATURES_NAME_MAPPING.items():
+            if value in features:
+                res = key | res
+        return res
 
     @ViewCache()
     def _rbd_list(self, pool_name):
@@ -68,3 +84,29 @@ class Rbd(RESTController):
         if status == ViewCache.VALUE_EXCEPTION:
             raise value
         return {'status': status, 'value': value}
+
+    def create(self, data):
+        if not self.rbd:
+            self.rbd = rbd.RBD()
+
+        # Get input values
+        size = data.get('size', 4 * 1024 ** 3)
+        obj_size = data.get('obj_size', 2 ** 22)
+        features = data.get('features', [])
+        stripe_unit = data.get('stripe_unit', None)
+        stripe_count = data.get('stripe_count', None)
+        data_pool = data.get('data_pool', None)
+
+        # Set order
+        order = None
+        if obj_size > 0:
+            order = int(round(math.log(float(obj_size), 2)))
+
+        # Set features
+        feature_bitmask = self._format_features(features) if len(features) > 0 \
+            else 61  # FIXME: hardcoded int
+
+        ioctx = mgr.rados.open_ioctx(data['pool_name'])
+        self.rbd.create(ioctx, data['name'], size, order=order, old_format=False,
+                        features=feature_bitmask, stripe_unit=stripe_unit,
+                        stripe_count=stripe_count, data_pool=data_pool)
