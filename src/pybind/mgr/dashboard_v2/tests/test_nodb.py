@@ -231,7 +231,7 @@ class NodbModelTest(TestCase):
 
     class SimpleModel(NodbModel):
         a = IntegerField(primary_key=True)
-        b = IntegerField()
+        b = IntegerField(default=None)
         with_default = IntegerField(default=42)
 
         @staticmethod
@@ -244,8 +244,7 @@ class NodbModelTest(TestCase):
     def test_make_model_args(self):
         args = NodbModelTest.SimpleModel.make_model_args(dict(a=1, bad=3))
         self.assertEqual(args, dict(a=1))
-        args = NodbModelTest.SimpleModel.make_model_args(dict(a=1, bad=3), fields_force_none=['b'])
-        self.assertEqual(args, dict(a=1, b=None))
+        self.assertIsNone(NodbModelTest.SimpleModel(**args).b)
 
     def test_get_modified_fields(self):
         first, second = NodbModelTest.SimpleModel.objects.all()
