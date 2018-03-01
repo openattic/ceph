@@ -720,11 +720,6 @@ EOF
     fi
 
     # dashboard_v2
-    # build frontend
-    pushd $MGR_PYTHON_PATH/dashboard_v2/frontend
-    npm install
-    npm run build
-    popd
     # setting login credentials for dashboard_v2
     ceph_adm mgr module enable dashboard_v2
     ceph_adm tell mgr dashboard set-login-credentials admin admin
