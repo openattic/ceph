@@ -695,14 +695,14 @@ EOF
         fi
 	MGR_PORT=$(($MGR_PORT + 1000))
 
+	DASH_V2_PORT=$DASH_V2_PORT
         # dashboard_v2
-	ceph_adm config-key set mgr/dashboard_v2/$name/server_port $MGR_PORT
+	ceph_adm config-key set mgr/dashboard_v2/$name/server_port $DASH_V2_PORT
         if [ $mgr -eq 1 ]; then
-            DASH_V2_URLS="http://$IP:$MGR_PORT"
+            DASH_V2_URLS="http://$IP:$DASH_V2_PORT"
         else
-            DASH_V2_URLS+=", http://$IP:$MGR_PORT"
+            DASH_V2_URLS+=", http://$IP:$DASH_V2_PORT"
         fi
-	MGR_PORT=$(($MGR_PORT + 1000))
 
         echo "Starting mgr.${name}"
         run 'mgr' $CEPH_BIN/ceph-mgr -i $name $ARGS
