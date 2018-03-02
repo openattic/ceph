@@ -14,7 +14,9 @@ import { DashboardComponent } from './ceph/dashboard/dashboard/dashboard.compone
 import {
   PerformanceCounterComponent
 } from './ceph/performance-counter/performance-counter/performance-counter.component';
+import { RgwBucketListComponent } from './ceph/rgw/rgw-bucket-list/rgw-bucket-list.component';
 import { RgwDaemonListComponent } from './ceph/rgw/rgw-daemon-list/rgw-daemon-list.component';
+import { RgwUserListComponent } from './ceph/rgw/rgw-user-list/rgw-user-list.component';
 import { LoginComponent } from './core/auth/login/login.component';
 import { NotFoundComponent } from './core/not-found/not-found.component';
 import { AuthGuardService } from './shared/services/auth-guard.service';
@@ -26,8 +28,18 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'hosts', component: HostsComponent, canActivate: [AuthGuardService] },
   {
-    path: 'rgw',
+    path: 'rgw/daemons',
     component: RgwDaemonListComponent,
+    canActivate: [AuthGuardService]
+  },
+  {
+    path: 'rgw/users',
+    component: RgwUserListComponent,
+    canActivate: [AuthGuardService]
+  },
+  {
+    path: 'rgw/buckets',
+    component: RgwBucketListComponent,
     canActivate: [AuthGuardService]
   },
   { path: 'block/iscsi', component: IscsiComponent, canActivate: [AuthGuardService] },
