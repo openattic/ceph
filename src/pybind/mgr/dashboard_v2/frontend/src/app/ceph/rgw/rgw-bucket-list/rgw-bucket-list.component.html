@@ -4,13 +4,14 @@
         class="breadcrumb-item">Object Gateway</li>
     <li i18n
         class="breadcrumb-item active"
-        aria-current="page">Daemons</li>
+        aria-current="page">Buckets</li>
   </ol>
 </nav>
-<cd-table [data]="daemons"
+<cd-table [data]="buckets"
           [columns]="columns"
           columnMode="flex"
+          identifier="bucket"
           [detailsComponent]="detailsComponent"
-          (fetchData)="getDaemonList()"
+          (fetchData)="getBucketList()"
           [beforeShowDetails]="beforeShowDetails">
 </cd-table>

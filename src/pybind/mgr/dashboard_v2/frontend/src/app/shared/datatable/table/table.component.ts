@@ -33,6 +33,7 @@ export class TableComponent implements AfterContentChecked, OnInit, OnChanges, O
   @ViewChild('tableCellBoldTpl') tableCellBoldTpl: TemplateRef<any>;
   @ViewChild('sparklineTpl') sparklineTpl: TemplateRef<any>;
   @ViewChild('routerLinkTpl') routerLinkTpl: TemplateRef<any>;
+  @ViewChild('checkIconTpl') checkIconTpl: TemplateRef<any>;
   @ViewChild('perSecondTpl') perSecondTpl: TemplateRef<any>;
 
   // This is the array with the items to be shown.
@@ -151,6 +152,7 @@ export class TableComponent implements AfterContentChecked, OnInit, OnChanges, O
 
   _addTemplates () {
     this.cellTemplates.bold = this.tableCellBoldTpl;
+    this.cellTemplates.checkIcon = this.checkIconTpl;
     this.cellTemplates.sparkline = this.sparklineTpl;
     this.cellTemplates.routerLink = this.routerLinkTpl;
     this.cellTemplates.perSecond = this.perSecondTpl;
@@ -213,6 +215,9 @@ export class TableComponent implements AfterContentChecked, OnInit, OnChanges, O
     if (!this.detailsComponent) {
       return;
     }
+    // Clear current displayed details.
+    this.detailTemplate.viewContainerRef.clear();
+    // Do we want to display the details?
     if (_.isFunction(this.beforeShowDetails)) {
       if (!this.beforeShowDetails(this.selected)) {
         return;
@@ -220,7 +225,6 @@ export class TableComponent implements AfterContentChecked, OnInit, OnChanges, O
     }
     const factories = Array.from(this.componentFactoryResolver['_factories'].keys());
     const factoryClass = <Type<any>>factories.find((x: any) => x.name === this.detailsComponent);
-    this.detailTemplate.viewContainerRef.clear();
     const cmpRef = this.detailTemplate.viewContainerRef.createComponent(
       this.componentFactoryResolver.resolveComponentFactory(factoryClass)
     );

@@ -5,13 +5,21 @@ import { TabsModule } from 'ngx-bootstrap/tabs';
 
 import { SharedModule } from '../../shared/shared.module';
 import { PerformanceCounterModule } from '../performance-counter/performance-counter.module';
+import { RgwBucketDetailsComponent } from './rgw-bucket-details/rgw-bucket-details.component';
+import { RgwBucketListComponent } from './rgw-bucket-list/rgw-bucket-list.component';
 import { RgwDaemonDetailsComponent } from './rgw-daemon-details/rgw-daemon-details.component';
 import { RgwDaemonListComponent } from './rgw-daemon-list/rgw-daemon-list.component';
+import { RgwUserDetailsComponent } from './rgw-user-details/rgw-user-details.component';
+import { RgwUserListComponent } from './rgw-user-list/rgw-user-list.component';
+import { RgwBucketService } from './services/rgw-bucket.service';
 import { RgwDaemonService } from './services/rgw-daemon.service';
+import { RgwUserService } from './services/rgw-user.service';
 
 @NgModule({
   entryComponents: [
-    RgwDaemonDetailsComponent
+    RgwDaemonDetailsComponent,
+    RgwBucketDetailsComponent,
+    RgwUserDetailsComponent
   ],
   imports: [
     CommonModule,
@@ -21,14 +29,24 @@ import { RgwDaemonService } from './services/rgw-daemon.service';
   ],
   exports: [
     RgwDaemonListComponent,
-    RgwDaemonDetailsComponent
+    RgwDaemonDetailsComponent,
+    RgwBucketListComponent,
+    RgwBucketDetailsComponent,
+    RgwUserListComponent,
+    RgwUserDetailsComponent
   ],
   declarations: [
     RgwDaemonListComponent,
-    RgwDaemonDetailsComponent
+    RgwDaemonDetailsComponent,
+    RgwBucketListComponent,
+    RgwBucketDetailsComponent,
+    RgwUserListComponent,
+    RgwUserDetailsComponent
   ],
   providers: [
-    RgwDaemonService
+    RgwBucketService,
+    RgwDaemonService,
+    RgwUserService
   ]
 })
 export class RgwModule { }
