@@ -40,3 +40,42 @@ class RbdTest(DashboardTestCase):
         self.assertEqual(img2['obj_size'], 4194304)
         self.assertEqual(img2['features_name'],
                          'deep-flatten, exclusive-lock, fast-diff, layering, object-map')
+
+    @authenticate
+    def test_create(self):
+        data = {'pool_name': 'rbd',
+                'name': 'test_rbd',
+                'size': 10240}
+        self._post('api/rbd', data)
+        self.assertStatus(201)
+
+        # TODO: change to GET the specific RBD instead of the list as soon as it is available?
+        ret = self._get('api/rbd/rbd')
+        rbd_names = [rbd['name'] for rbd in ret['value'] if 'name' in rbd]
+        self.assertStatus(200)
+        self.assertIn('test_rbd', rbd_names)
+
+        self._rbd_cmd(['rm', 'rbd/test_rbd'])
+
+    @authenticate
+    def test_create_data_pool(self):
+        self._ceph_cmd(['osd', 'pool', 'create', 'data_pool', '12', '12', 'erasure'])
+        self._ceph_cmd(['osd', 'pool', 'application', 'enable', 'data_pool', 'rbd'])
+        self._ceph_cmd(['osd', 'pool', 'set', 'data_pool', 'allow_ec_overwrites', 'true'])
+
+        data = {'pool_name': 'rbd',
+                'name': 'test_rbd',
+                'size': 10240,
+                'data_pool': 'data_pool'}
+        self._post('/api/rbd', data)
+        self.assertStatus(201)
+
+        # TODO: possibly change to GET the specific RBD (see above)
+        ret = self._get('api/rbd/rbd')
+        rbd_names = [rbd['name'] for rbd in ret['value'] if 'name' in rbd]
+        self.assertStatus(200)
+        self.assertIn('test_rbd', rbd_names)
+
+        self._rbd_cmd(['rm', 'rbd/test_rbd'])
+        self._ceph_cmd(['osd', 'pool', 'delete', 'data_pool', 'data_pool',
+                        '--yes-i-really-really-mean-it'])
